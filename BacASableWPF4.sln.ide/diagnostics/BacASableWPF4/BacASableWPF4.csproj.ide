@@ -1,0 +1,13 @@
+﻿<Project Format="0.0.0.2" Name="D:\Src\0 Tools &amp; stuff\BacASableWPF4\BacASableWPF4\BacASableWPF4.csproj">
+  <Version>2012-07-03T14:56:05.3471093Z</Version>
+  <Binding>True</Binding>
+  <Diagnostic>
+    <Code>144</Code>
+    <Id>CS0144</Id>
+    <Severity>Error</Severity>
+    <Message>Cannot create an instance of the abstract class or interface 'IWshRuntimeLibrary.WshShell'</Message>
+    <File>D:\Src\0 Tools &amp; stuff\BacASableWPF4\BacASableWPF4\MainWindow.xaml.cs</File>
+    <Line>74</Line>
+    <Column>29</Column>
+  </Diagnostic>
+</Project>
