@@ -17,6 +17,8 @@ using System.Security.Principal;
 using System.Xml.Schema;
 using System.Diagnostics;
 using System.Management;
+using System.Xml.Linq;
+using System.Security.Cryptography;
 
 namespace BacASableWPF4
 {
@@ -26,6 +28,24 @@ namespace BacASableWPF4
     /// 
     public partial class MainWindow : Window
     {
+        private const string PRIVATE_KEY = @"
+<RSAKeyValue>
+  <Modulus>sJKuRsD1Uk6c4rtzOGfuhel1sBGY1J0HxEAWROa21c7yy8zPJxvn6mySsCUYamhBEailK4zyz9He/A48F1GV8R2jR7SlG6ppW/O9ZTUeGL74DQTI8EggY+PfTa9xFSH2Bk5UsgqdsNRk1cOGv67WlJoPL9Vn4JkBFJ6gcHAsfds=</Modulus>
+  <Exponent>AQAB</Exponent>
+  <P>7ZNDkTJzOo2jMTiM11vqHhX9F85S82lOz10Rs3xxzNBR1GSbdcOXOK8tTZWlgsmVn4ErSOXlqDwBI3EBKo+HUw==</P>
+  <Q>vkRMhONQrfyB96ftIYL4+Riw7FWl3vO2KmVEEpyJEur5EGgyyofy7dRReqKqAb+K+iP9TsaU22opiAechauGWQ==</Q>
+  <DP>f0aTvifO/6F9uhLXsVB2nmOdUbGhUvIp3IG5x/R1awp3rFexyWddjmqa1KPFJcolNGyY6dbwMC7lVT1nKIv4LQ==</DP>
+  <DQ>OqXA1GFhGBAyW402idLePaH/vwlzdHK43v6R6g64Lc2h8g28QjN/jRGZ/+wt7RYGl64KQYLylWN248g81fMWGQ==</DQ>
+  <InverseQ>pdUQPLG8kEd1GsYdWeQYkQxoNrolZp/RjRSNAGL8vFurTOFd61GbNT8CVOES0uLA7PM8ZxmxcF98bsiXCRTuyQ==</InverseQ>
+  <D>hki3M2Xx7AuPMrueL8qS0tKuxx1K3n8h9fVLOlE/wTDm42k6LaMCZ/z0PfOoMtxgh/56xrklvDj+3TAyMQXCAlzHsjhrCTGPAUucYWXrKHIXKiICU5QC5f8j0sJqV2YA5qCmUO2ANpxMYGs0xwbU6qCaAjHHgCZDguKCabvB8TE=</D>
+</RSAKeyValue>";
+
+        private const string PUBLIC_KEY = @"
+<RSAKeyValue>
+  <Modulus>sJKuRsD1Uk6c4rtzOGfuhel1sBGY1J0HxEAWROa21c7yy8zPJxvn6mySsCUYamhBEailK4zyz9He/A48F1GV8R2jR7SlG6ppW/O9ZTUeGL74DQTI8EggY+PfTa9xFSH2Bk5UsgqdsNRk1cOGv67WlJoPL9Vn4JkBFJ6gcHAsfds=</Modulus>
+  <Exponent>AQAB</Exponent>
+</RSAKeyValue>";
+
 
         public MainWindow()
         {
@@ -34,9 +54,39 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, "MB SN : " + GetMotherBoardSerialNumber());
+            var testFile =XDocument.Parse(PRIVATE_KEY);
+            var garbage = XDocument.Parse("<Toto><AlaPlage tata=\"true\"/></Toto>");
+
+            var signature = SignLicenseFile(testFile);
+            MessageBox.Show(this, "Signature : " + VerifySignature(testFile, signature).ToString());
+            MessageBox.Show(this, "Garbage : " + VerifySignature(garbage, signature).ToString());
         }
 
+        private Byte[] SignLicenseFile(XDocument xdocFile)
+        {
+            using (var rsa = new RSACryptoServiceProvider())
+            using (SHA512 sha = SHA512.Create())
+            using (var xmlStream = new MemoryStream())
+            {
+                rsa.FromXmlString(PRIVATE_KEY);
+                xdocFile.Save(xmlStream);
+                xmlStream.Position = 0;
+                return rsa.SignHash(sha.ComputeHash(xmlStream), "SHA512");
+            }
+        }
+        private bool VerifySignature(XDocument xdocFile, byte[] signature)
+        {
+            using (var rsa = new RSACryptoServiceProvider())
+            using (SHA512 sha = SHA512.Create())
+            using (var xmlStream = new MemoryStream())
+            {
+                rsa.FromXmlString(PUBLIC_KEY);
+                xdocFile.Save(xmlStream);
+                xmlStream.Position = 0;
+                return rsa.VerifyHash(sha.ComputeHash(xmlStream), "SHA512", signature);
+            }
+        }
+		
         private string GetMotherBoardSerialNumber()
         {
             var searcher = new ManagementObjectSearcher("select * from Win32_BaseBoard ");
@@ -57,8 +107,8 @@ namespace BacASableWPF4
                 resultBuilder.AppendFormat("{0} : {1}\n", property.Name, mo[property.Name]);
             }
             return resultBuilder.ToString();
-        }
-
+		}
+		
         private void TestYieldVsList()
         {
             var reportBuilder = new StringBuilder();
