@@ -16,6 +16,7 @@ using System.Xml;
 using System.Security.Principal;
 using System.Xml.Schema;
 using System.Diagnostics;
+using System.Management;
 
 namespace BacASableWPF4
 {
@@ -33,7 +34,29 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestYieldVsList();
+            MessageBox.Show(this, "MB SN : " + GetMotherBoardSerialNumber());
+        }
+
+        private string GetMotherBoardSerialNumber()
+        {
+            var searcher = new ManagementObjectSearcher("select * from Win32_BaseBoard ");
+
+            var resultBuilder = new StringBuilder();
+            return searcher.Get().Cast<ManagementBaseObject>().First()["SerialNumber"].ToString();
+        }
+
+        private string GetHardwareProperties()
+        {
+            var searcher = new ManagementObjectSearcher("select * from Win32_BaseBoard ");
+
+            var resultBuilder = new StringBuilder();
+            var mo = searcher.Get().Cast<ManagementBaseObject>().First();
+            foreach (PropertyData property in mo.Properties)
+            {
+                var truc = mo[property.Name];
+                resultBuilder.AppendFormat("{0} : {1}\n", property.Name, mo[property.Name]);
+            }
+            return resultBuilder.ToString();
         }
 
         private void TestYieldVsList()
