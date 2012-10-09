@@ -54,7 +54,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            var testFile =XDocument.Parse(PRIVATE_KEY);
+            var testFile = XDocument.Parse(PRIVATE_KEY);
             var garbage = XDocument.Parse("<Toto><AlaPlage tata=\"true\"/></Toto>");
 
             var signature = SignLicenseFile(testFile);
@@ -74,6 +74,7 @@ namespace BacASableWPF4
                 return rsa.SignHash(sha.ComputeHash(xmlStream), "SHA512");
             }
         }
+
         private bool VerifySignature(XDocument xdocFile, byte[] signature)
         {
             using (var rsa = new RSACryptoServiceProvider())
@@ -86,7 +87,7 @@ namespace BacASableWPF4
                 return rsa.VerifyHash(sha.ComputeHash(xmlStream), "SHA512", signature);
             }
         }
-		
+
         private string GetMotherBoardSerialNumber()
         {
             var searcher = new ManagementObjectSearcher("select * from Win32_BaseBoard ");
@@ -107,8 +108,8 @@ namespace BacASableWPF4
                 resultBuilder.AppendFormat("{0} : {1}\n", property.Name, mo[property.Name]);
             }
             return resultBuilder.ToString();
-		}
-		
+        }
+
         private void TestYieldVsList()
         {
             var reportBuilder = new StringBuilder();
