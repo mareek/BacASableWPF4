@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Management;
 using System.Xml.Linq;
 using System.Security.Cryptography;
+using System.IO.Compression;
 
 namespace BacASableWPF4
 {
@@ -54,13 +55,84 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            var testFile = XDocument.Parse(PRIVATE_KEY);
-            var garbage = XDocument.Parse("<Toto><AlaPlage tata=\"true\"/></Toto>");
+            var report = from i in Enumerable.Range(7, 12)
+                         select (int)Math.Pow(2, i) into dataLength
+                         select string.Format("{0:000000} : {1}", dataLength, TestCompressionUsefullness(dataLength));
 
-            var signature = SignLicenseFile(testFile);
-            MessageBox.Show(this, "Signature : " + VerifySignature(testFile, signature).ToString());
-            MessageBox.Show(this, "Garbage : " + VerifySignature(garbage, signature).ToString());
+            MessageBox.Show(this, string.Join("\n", report));
         }
+
+        private string TestCompressionUsefullness(int dataLength)
+        {
+            var rnd = new Random();
+            var randomData = new byte[dataLength];
+            rnd.NextBytes(randomData);
+
+            var higlyCompressibleData = new byte[dataLength];
+
+            var lowlyCompressibleData = new byte[dataLength];
+            var increment = 1;
+            var val = 0;
+            var pass = 0;
+            for (var i = 0; i < dataLength; i++)
+            {
+                lowlyCompressibleData[i] = (byte)val;
+
+                val = (val + increment) % 256;
+                pass++;
+                if (pass > 255)
+                {
+                    pass = 0;
+                    increment += 2;
+                }
+            }
+
+            var fileData = new byte[dataLength];
+            using (var fileReader = File.OpenRead(@"D:\temp\allocine.xml"))
+            {
+                fileReader.Read(fileData, 0, dataLength);
+            }
+
+            var rndZipped = ZipData(randomData);
+            var highZipped = ZipData(higlyCompressibleData);
+            var lowZipped = ZipData(lowlyCompressibleData);
+            var fileZipped = ZipData(fileData);
+
+            Func<byte[], decimal> calcPercent = zippedArray => 100m * (1m - ((decimal)zippedArray.Length) / (decimal)dataLength);
+
+            return string.Format("Random : {0:00.0}  ; Low : {2:00.0}  ; High : {1:00.0}  ; File : {3:00.0}",
+                                 calcPercent(rndZipped),
+                                 calcPercent(highZipped),
+                                 calcPercent(lowZipped),
+                                 calcPercent(fileZipped));
+        }
+
+        private static byte[] ZipData(byte[] dataToZip)
+        {
+            using (var zipStream = new MemoryStream())
+            {
+                using (var dataStream = new MemoryStream(dataToZip))
+                using (var compressionStream = new DeflateStream(zipStream, CompressionMode.Compress))
+                {
+                    dataStream.CopyTo(compressionStream);
+                }
+                return zipStream.ToArray();
+            }
+        }
+
+        private static byte[] UnzipData(byte[] zippedData)
+        {
+            using (var decompressedStream = new MemoryStream())
+            {
+                using (var compressedStream = new MemoryStream(zippedData))
+                using (var decompressionStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
+                {
+                    decompressionStream.CopyTo(decompressedStream);
+                }
+                return decompressedStream.ToArray();
+            }
+        }
+
 
         private Byte[] SignLicenseFile(XDocument xdocFile)
         {
