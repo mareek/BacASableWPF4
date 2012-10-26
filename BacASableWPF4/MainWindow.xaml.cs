@@ -20,6 +20,7 @@ using System.Management;
 using System.Xml.Linq;
 using System.Security.Cryptography;
 using System.IO.Compression;
+using System.Globalization;
 
 namespace BacASableWPF4
 {
@@ -55,10 +56,54 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestCompressionUsefullness();
+            var date = new DateTime(2011, 2, 29);
+            MessageBox.Show(this, "OK");
+
         }
 
-        private void TestCompressionUsefullness()
+        private void TestLinqSortingByXmlAttribute()
+        {
+            var doc = XDocument.Parse("<Root>    <Element Attribute=\"1\"/>    <Element Attribute=\"2\"/>    <Element/></Root>");
+            var orderedElements = from element in doc.Root.Elements()
+                                  orderby element.Attribute("Attribute") == null ? null : element.Attribute("Attribute").ToString()
+                                  select element.ToString();
+            MessageBox.Show(this, string.Join("\n", orderedElements));
+        }
+
+        private void TestBitParsing()
+        {
+
+            var dataBytes = new byte[] { 0x90, 0x1A };
+
+            const byte zero = 0;
+
+            var Day = zero.SetBitSlice(0, dataBytes[0].GetBitSlice(0, 5));
+
+            var Month = zero.SetBitSlice(0, dataBytes[1].GetBitSlice(0, 4));
+
+            var yearBitArray = dataBytes[0].GetBitSlice(5, 3).Concat(dataBytes[1].GetBitSlice(4, 4)).ToArray();
+            var Year = zero.SetBitSlice(0, yearBitArray);
+
+
+            //var Day = Enumerable.Range(0, 5).Aggregate((byte)0, (res, i) => res.SetBit(i, dataBytes[0].GetBit(i)));
+            //var Month = Enumerable.Range(0, 4).Aggregate((byte)0, (res, i) => res.SetBit(i, dataBytes[1].GetBit(i)));
+            //var Year = Enumerable.Range(5, 3).Select(i => dataBytes[0].GetBit(i)).Concat(Enumerable.Range(4, 4).Select(i => dataBytes[1].GetBit(i))).Zip(Enumerable.Range(0, 7), (bit, i) => new { Val = bit, Index = i }).Aggregate((byte)0, (res, i) => res.SetBit(i.Index, i.Val));
+
+            //var YearBitArray = Enumerable.Range(5, 3).Select(i => dataBytes[0].GetBit(i)).Concat(Enumerable.Range(4, 4).Select(i => dataBytes[1].GetBit(i)));
+            //var Year = Enumerable.Range(0, 7).Aggregate((byte)0, (res, i) => res.SetBit(i, YearBitArray[i]));
+
+            MessageBox.Show(this, string.Format("20{0}-{1}-{2}", Year, Month, Day));
+        }
+
+
+        private void TestRsaSignature()
+        {
+            var testFile = XDocument.Parse(PRIVATE_KEY);
+            var garbage = XDocument.Parse("<Toto><AlaPlage tata=\"true\"/></Toto>");
+
+        }
+
+        private void TestCompression()
         {
             var report = from i in Enumerable.Range(7, 12)
                          select (int)Math.Pow(2, i) into dataLength
@@ -167,22 +212,25 @@ namespace BacASableWPF4
 
         private string GetMotherBoardSerialNumber()
         {
-            var searcher = new ManagementObjectSearcher("select * from Win32_BaseBoard ");
+            var searcher = new ManagementObjectSearcher("select SerialNumber from Win32_BaseBoard ");
 
-            var resultBuilder = new StringBuilder();
-            return searcher.Get().Cast<ManagementBaseObject>().First()["SerialNumber"].ToString();
+            return searcher.Get().Cast<ManagementBaseObject>().First().Properties.Cast<PropertyData>().First().Value.ToString();
         }
 
-        private string GetHardwareProperties()
+        private string GetHardwareProperties(string className)
         {
-            var searcher = new ManagementObjectSearcher("select * from Win32_BaseBoard ");
+            var searcher = new ManagementObjectSearcher("select * from " + className);
 
             var resultBuilder = new StringBuilder();
-            var mo = searcher.Get().Cast<ManagementBaseObject>().First();
+            foreach (ManagementBaseObject mo in searcher.Get())
+            {
             foreach (PropertyData property in mo.Properties)
             {
                 var truc = mo[property.Name];
-                resultBuilder.AppendFormat("{0} : {1}\n", property.Name, mo[property.Name]);
+                    resultBuilder.AppendFormat("{0} : {1}\n", property.Name, property.Value);
+                }
+                resultBuilder.Append("=====================================\n");
+                resultBuilder.AppendLine();
             }
             return resultBuilder.ToString();
         }
