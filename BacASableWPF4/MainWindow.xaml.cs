@@ -56,9 +56,25 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            var date = new DateTime(2011, 2, 29);
-            MessageBox.Show(this, "OK");
+            BCDConversions();
+        }
 
+        private void BCDConversions()
+        {
+            var shortBCDByteArray = new byte[] { 0x10, 0x32, };
+            var longBCDByteArray = new byte[] { 0x10, 0x32, 0x54, 0x76, };
+
+            MessageBox.Show(this, string.Format("long BCD : {0}\nshort BCD : {1}\n", longBCDByteArray.BCDToInteger(), shortBCDByteArray.BCDToInteger()));
+
+        }
+
+        private void MoreBitParsing()
+        {
+            var témoin = BitConverter.ToUInt32(new byte[] { 1, 0, 0, 0 }, 0);
+            var truc = new byte[] { 1, 0, 0, 0 };
+            truc = truc.Concat(new byte[] { 0, 0, 0, 0 }).ToArray();
+            var result = BitConverter.ToUInt32(truc, 0);
+            MessageBox.Show(this, string.Format("témoin : {0}\ntruc : {1}", témoin, result));
         }
 
         private void TestLinqSortingByXmlAttribute()
@@ -224,9 +240,9 @@ namespace BacASableWPF4
             var resultBuilder = new StringBuilder();
             foreach (ManagementBaseObject mo in searcher.Get())
             {
-            foreach (PropertyData property in mo.Properties)
-            {
-                var truc = mo[property.Name];
+                foreach (PropertyData property in mo.Properties)
+                {
+                    var truc = mo[property.Name];
                     resultBuilder.AppendFormat("{0} : {1}\n", property.Name, property.Value);
                 }
                 resultBuilder.Append("=====================================\n");

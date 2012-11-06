@@ -31,5 +31,45 @@ namespace BacASableWPF4
         {
             return Enumerable.Range(0, bitValues.Length).Aggregate((byte)0, (res, i) => res.SetBit(startBit + i, bitValues[i]));
         }
+
+        /// <summary>
+        /// Convert the BCD byte array to it's integer representation
+        /// </summary>
+        /// <param name="value">The byte array to convert</param>
+        /// <returns>The integer representation of the given BCD byte array (same as BCDToInteger(true)</returns>
+        public static int BCDToInteger(this byte[] value)
+        {
+            return value.BCDToInteger(true);
+        }
+
+        /// <summary>
+        /// Convert the BCD byte array to it's integer representation
+        /// </summary>
+        /// <param name="value">The byte array to convert</param>
+        /// <param name="msb">if the frame is msg first</param>
+        /// <returns>The integer representation of the given BCD byte array</returns>
+        public static int BCDToInteger(this byte[] value, bool msb)
+        {
+            var cpt = value.Length;
+            var result = 0;
+
+            while (--cpt >= 0)
+            {
+                var b = value[cpt];
+                var high = b >> 4;
+                if (high > 0x09)
+                    throw new Exception("NOT BCD !");
+                var low = b & 0x0F;
+                if (low > 0x09)
+                    throw new Exception("NOT BCD !");
+
+                result += msb ?
+                    high * (int)Math.Pow(10, (cpt * 2) + 1) + low * (int)Math.Pow(10, cpt * 2) :
+                    high * (int)Math.Pow(10, ((value.Length - (cpt + 1)) * 2) + 1) + low * (int)Math.Pow(10, (value.Length - (cpt + 1)) * 2);
+            }
+
+            return result;
+        }
+
     }
 }
