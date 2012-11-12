@@ -71,5 +71,21 @@ namespace BacASableWPF4
             return result;
         }
 
+        public static bool IsMyKindOfEnum(this System.Linq.ParallelMergeOptions truc)
+        {
+            switch(truc)
+            {
+                case ParallelMergeOptions.AutoBuffered:
+                case ParallelMergeOptions.FullyBuffered:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static void truc<T>(this T machin)
+        {
+            Console.WriteLine(machin.ToString());
+        }
     }
 }

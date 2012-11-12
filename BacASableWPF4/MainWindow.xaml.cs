@@ -56,7 +56,11 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            BCDConversions();
+            var result = string.Join("\n",
+                                     from myEnum in Enum.GetValues(typeof(ParallelMergeOptions)).Cast<ParallelMergeOptions>()
+                                     select string.Format("{0} : {1}", myEnum, myEnum.IsMyKindOfEnum()));
+            result.truc();
+            MessageBox.Show(this, result);
         }
 
         private void BCDConversions()
