@@ -56,11 +56,35 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
+            var searchedItem = 3;
+
+            var paramsResult = searchedItem.In(1, 2, 3, 4, 5);
+            var enumerableResult = searchedItem.In(Enumerable.Range(0, 5));
+            
+
+            MessageBox.Show(this, string.Format("Search by params : {0}\nSearch by enumerable : {1}", paramsResult, enumerableResult));
+        }
+
+        private void ExtensionsMethodsOnEnumsAndGenerics()
+        {
             var result = string.Join("\n",
                                      from myEnum in Enum.GetValues(typeof(ParallelMergeOptions)).Cast<ParallelMergeOptions>()
                                      select string.Format("{0} : {1}", myEnum, myEnum.IsMyKindOfEnum()));
             result.truc();
             MessageBox.Show(this, result);
+        }
+
+        private void TestProductByteParsing()
+        {
+            const byte zero = 0;
+            byte productByte = 0x15;
+            byte meterTypeByteSlice = 0;
+            meterTypeByteSlice = zero.SetBitSlice(0, productByte.GetBitSlice(0, 3));
+
+            byte mediumByteSlice = 0;
+            mediumByteSlice = zero.SetBitSlice(0, productByte.GetBitSlice(3, 2));
+
+            MessageBox.Show(this, "meter type : " + meterTypeByteSlice.ToString() + "\nmedium type : " + mediumByteSlice.ToString());
         }
 
         private void BCDConversions()
