@@ -60,9 +60,18 @@ namespace BacASableWPF4
 
             var paramsResult = searchedItem.In(1, 2, 3, 4, 5);
             var enumerableResult = searchedItem.In(Enumerable.Range(0, 5));
-            
+
+            var truc = new[] { 1, 2, 3, 4, 5 }.Contains(searchedItem);
 
             MessageBox.Show(this, string.Format("Search by params : {0}\nSearch by enumerable : {1}", paramsResult, enumerableResult));
+        }
+
+        private IEnumerable<int> LinqMadness()
+        {
+            return from truc in Enumerable.Range(0, 100)
+                   where truc.In(from i in Enumerable.Range(1, 100)
+                                 select i * 2)
+                   select truc;
         }
 
         private void ExtensionsMethodsOnEnumsAndGenerics()
