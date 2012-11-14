@@ -56,6 +56,21 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
+            SafeCallTest();
+        }
+
+        private void SafeCallTest()
+        {
+            Button myButton = TestButton;
+
+            var result = myButton.SC(e => e.Background).SC(e => e.ToString());
+//            var result = myButton.Background.ToString();
+
+            MessageBox.Show(this, result ?? "null");
+        }
+
+        private void AwesomeExtensionMethod()
+        {
             var searchedItem = 3;
 
             var paramsResult = searchedItem.In(1, 2, 3, 4, 5);

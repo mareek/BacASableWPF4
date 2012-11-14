@@ -73,7 +73,7 @@ namespace BacASableWPF4
 
         public static bool IsMyKindOfEnum(this System.Linq.ParallelMergeOptions truc)
         {
-            switch(truc)
+            switch (truc)
             {
                 case ParallelMergeOptions.AutoBuffered:
                 case ParallelMergeOptions.FullyBuffered:
@@ -96,6 +96,13 @@ namespace BacASableWPF4
         public static bool In<T>(this T value, IEnumerable<T> values)
         {
             return values.Contains(value);
+        }
+
+        public static U SC<T, U>(this T value, Func<T,U> func)
+            where U : class
+        {
+            if (value == null) return null;
+            else return func(value);
         }
     }
 }
