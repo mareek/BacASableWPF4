@@ -21,6 +21,7 @@ using System.Xml.Linq;
 using System.Security.Cryptography;
 using System.IO.Compression;
 using System.Globalization;
+using Itron.CommInterface;
 
 namespace BacASableWPF4
 {
@@ -58,6 +59,12 @@ namespace BacASableWPF4
         {
             SafeCallTest();
         }
+
+        private void testNuget()
+        {
+            var truc = new Manager();
+        }
+
 
         private void SafeCallTest()
         {
