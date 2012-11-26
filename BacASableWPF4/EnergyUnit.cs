@@ -21,7 +21,7 @@ namespace BacASableWPF4
         public static EnergyUnit GetAdjustedUnit(this EnergyUnit originalUnit, ref decimal factor)
         {
             var minimalFactorLog = originalUnit.GetFactorLogForSmallestUnit(factor);
-            if (Math.Round(factor) != factor)
+            if (Math.Round(minimalFactorLog) != minimalFactorLog)
             {
                 return originalUnit;
             }
