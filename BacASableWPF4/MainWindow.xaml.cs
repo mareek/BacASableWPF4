@@ -56,16 +56,57 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            SafeCallTest();
+            PlayUnitConversionTestRun();
         }
 
+        private void PlayUnitConversionTestRun()
+        {
+            TestUnitConversion(EnergyUnit.Wh, 10000, EnergyUnit.kWh, 10);
+            TestUnitConversion(EnergyUnit.Wh, 100, EnergyUnit.Wh, 100);
+            TestUnitConversion(EnergyUnit.MWh, 0.001m, EnergyUnit.kWh, 1);
+            TestUnitConversion(EnergyUnit.MWh, 0.0001m, EnergyUnit.Wh, 100);
+            TestUnitConversion(EnergyUnit.kWh, 0.0001m, EnergyUnit.Wh, 0.1m);
+            TestUnitConversion(EnergyUnit.kWh, 0.1m, EnergyUnit.Wh, 100);
+            TestUnitConversion(EnergyUnit.kWh, 1000000000000m, EnergyUnit.MWh, 1000000000m);
+            TestUnitConversion(EnergyUnit.Wh, 0.001m, EnergyUnit.Wh, 0.001m);
+            TestUnitConversion(EnergyUnit.Wh, 3742, EnergyUnit.Wh, 3742);
+
+            TestUnitConversion(EnergyUnit.J, 10000, EnergyUnit.kJ, 10);
+            TestUnitConversion(EnergyUnit.J, 100, EnergyUnit.J, 100);
+            TestUnitConversion(EnergyUnit.MJ, 0.001m, EnergyUnit.kJ, 1);
+            TestUnitConversion(EnergyUnit.MJ, 0.0001m, EnergyUnit.J, 100);
+            TestUnitConversion(EnergyUnit.kJ, 0.0001m, EnergyUnit.J, 0.1m);
+            TestUnitConversion(EnergyUnit.kJ, 0.1m, EnergyUnit.J, 100);
+            TestUnitConversion(EnergyUnit.kJ, 1000000000000m, EnergyUnit.GJ, 1000000m);
+            TestUnitConversion(EnergyUnit.GJ, 0.001m, EnergyUnit.MJ, 1);
+            TestUnitConversion(EnergyUnit.GJ, 0.0001m, EnergyUnit.kJ, 100);
+            TestUnitConversion(EnergyUnit.J, 3742, EnergyUnit.J, 3742);
+
+            MessageBox.Show(this, "All tests clear !");
+        }
+
+        private static void TestUnitConversion(EnergyUnit originalUnit, decimal originalFactor, EnergyUnit desiredUnit, decimal desiredFactor)
+        {
+            var convertedFactor = originalFactor;
+            var convertedUnit = originalUnit.GetAdjustedUnit(ref convertedFactor);
+
+            /* quand je serai dans un projet de test
+            Assert.AreEqual(convertedUnit, desiredUnit);
+            Assert.AreEqual(convertedFactor, desiredFactor);
+             */
+
+            if (convertedUnit != desiredUnit)
+                throw new ApplicationException(string.Format("Excepted : {0} - Actual : {1}", desiredUnit, convertedUnit));
+            if (convertedFactor != desiredFactor)
+                throw new ApplicationException(string.Format("Excepted : {0} - Actual : {1}", desiredFactor, convertedFactor));
+        }
 
         private void SafeCallTest()
         {
             Button myButton = TestButton;
 
             var result = myButton.SC(e => e.Background).SC(e => e.ToString());
-//            var result = myButton.Background.ToString();
+            //            var result = myButton.Background.ToString();
 
             MessageBox.Show(this, result ?? "null");
         }
