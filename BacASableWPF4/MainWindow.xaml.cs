@@ -21,9 +21,11 @@ using System.Xml.Linq;
 using System.Security.Cryptography;
 using System.IO.Compression;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace BacASableWPF4
 {
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -48,7 +50,6 @@ namespace BacASableWPF4
   <Exponent>AQAB</Exponent>
 </RSAKeyValue>";
 
-
         public MainWindow()
         {
             InitializeComponent();
@@ -56,7 +57,27 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            PlayUnitConversionTestRun();
+            ExtractDataFromXml();
+        }
+
+        private void ExtractDataFromXml()
+        {
+            using (var reader = File.OpenText(@"C:\Temp\rawXML.xml"))
+            {
+                var doc = XDocument.Load(reader);
+                var mlogDatas = from mius in doc.Root.Elements()
+                                from datas in mius.Elements()
+                                select new
+                                {
+                                    SerialNumber = mius.Attribute("RFAddress").Value,
+                                    Date = XmlConvert.ToDateTime(datas.Attribute("DataDate").Value, XmlDateTimeSerializationMode.Unspecified),
+                                    RawData = Convert.FromBase64String(datas.Attribute("RawData").Value),
+                                } into miuData
+                                orderby miuData.SerialNumber, miuData.Date
+                                select miuData;
+
+                MessageBox.Show(this, string.Join("\n", mlogDatas.Select(d => string.Format("{0} - {1} : {2}", d.SerialNumber, d.Date.ToShortDateString(), d.RawData.ToRawhexString()))));
+            }
         }
 
         private void PlayUnitConversionTestRun()

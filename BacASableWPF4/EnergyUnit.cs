@@ -79,23 +79,6 @@ namespace BacASableWPF4
 
         }
 
-        private static EnergyUnit GetSmallestUnit(EnergyUnit originalUnit)
-        {
-            switch (originalUnit)
-            {
-                case EnergyUnit.Wh:
-                case EnergyUnit.kWh:
-                case EnergyUnit.MWh:
-                    return EnergyUnit.Wh;
-                case EnergyUnit.J:
-                case EnergyUnit.kJ:
-                case EnergyUnit.MJ:
-                case EnergyUnit.GJ:
-                default:
-                    return EnergyUnit.J;
-            }
-        }
-
         private static double GetFactorLogForSmallestUnit(this EnergyUnit originalUnit, decimal factor)
         {
             var factorLog = Math.Log10((double)factor);

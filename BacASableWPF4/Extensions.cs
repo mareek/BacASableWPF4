@@ -7,6 +7,16 @@ namespace BacASableWPF4
 {
     static class Extensions
     {
+        public static string ToRawhexString(this byte[] byteArray)
+        {
+            return string.Join("", byteArray.Select(b => b.ToString("X2")).ToArray());
+        }
+
+        public static string ToCSharpDeclaration(this byte[] byteArray)
+        {
+            return "{ " + string.Join(", ", byteArray.Select(b => "0x" + b.ToString("X2")).ToArray()) + " }";
+        }
+
         public static bool GetBit(this byte b, int bitNumber)
         {
             return (b & (1 << bitNumber)) != 0;
