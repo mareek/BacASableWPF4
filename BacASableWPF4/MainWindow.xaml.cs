@@ -57,7 +57,42 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            ExtractDataFromXml();
+            MessageBox.Show(this, Base64ToHexadeciaml("AABoTU1oCAByhoVTEpImGAzrEAAADHiGhVMSBA8iAQAADBRDEgAAOy2ZmZk7O5mZmQpaUgIKXkICC2EDAQAEbR8LtxECJ3cBCf0OBgn9DwYPIAAQFg=="));
+        }
+
+        private string Base64ToHexadeciaml(string base64String)
+        {
+            return Convert.FromBase64String(base64String).ToRawhexString();
+        }
+
+        private void parseXmlAnne()
+        {
+            const string xml =
+@"<?xml version='1.0'?>
+<Response>
+    <ProcessServlet>
+        <Error>xml validation error 1</Error>
+        <Message>ProfileType must be empty or 3 cars long</Message>
+        <Error>xml validation error 2</Error>
+        <Message>CreationDateTime is mandatory</Message>
+        <Error>xml validation error 3</Error>
+        <Message>LastModifyDateTime is mandatory</Message>
+        <Error>xml validation error 4</Error>
+        <Message>Rail SeatDirection should be (Yes or No)</Message>
+    </ProcessServlet>
+</Response>";
+            //J'aimerais pouvoir récupérer une liste de couples {error, message}...mais je n'y arrive pas. Est-ce que c'est faisable en linq ?
+
+            var doc = XDocument.Parse(xml);
+
+            var processServletElement = doc.Root.Element("ProcessServlet");
+
+            var errors = processServletElement.Elements("Error");
+            var messages = processServletElement.Elements("Message");
+
+            var couples = errors.Zip(messages, (error, message) => new { Error = error.Value, Message = message.Value });
+
+            MessageBox.Show(string.Join("\n", couples.Select(couple => couple.Error + " : " + couple.Message)));
         }
 
         private void ExtractDataFromXml()
@@ -75,6 +110,8 @@ namespace BacASableWPF4
                                 } into miuData
                                 orderby miuData.SerialNumber, miuData.Date
                                 select miuData;
+
+
 
                 MessageBox.Show(this, string.Join("\n", mlogDatas.Select(d => string.Format("{0} - {1} : {2}", d.SerialNumber, d.Date.ToShortDateString(), d.RawData.ToRawhexString()))));
             }
