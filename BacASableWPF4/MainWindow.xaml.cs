@@ -57,7 +57,25 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, Base64ToHexadeciaml("AABoTU1oCAByhoVTEpImGAzrEAAADHiGhVMSBA8iAQAADBRDEgAAOy2ZmZk7O5mZmQpaUgIKXkICC2EDAQAEbR8LtxECJ3cBCf0OBgn9DwYPIAAQFg=="));
+            ScanFilesFromFtp();
+        }
+
+        private void ScanFilesFromFtp()
+        {
+            var dir = new DirectoryInfo(@"C:\Users\mmouriss\Desktop\ftp");
+            var files = dir.GetFiles();
+
+            long dummyLong;
+            Func<FileInfo, string> getPrefix = f => string.Join("_", f.Name.Remove(f.Name.Length - 4).Split(new[] { "_" }, StringSplitOptions.RemoveEmptyEntries).TakeWhile(sub => !long.TryParse(sub, out dummyLong)));
+
+            var prefixes = files.Select(getPrefix).Distinct();
+
+            var filesByTime = from file in files
+                              group file by new { file.LastWriteTime.Hour, file.LastWriteTime.Minute } into grouped
+                              orderby grouped.Key.Hour, grouped.Key.Minute 
+                              select string.Format("{0:00}:{1:00} - {2:000} ({3:0000}Ko) ", grouped.Key.Hour, grouped.Key.Minute, grouped.Count(), grouped.Sum(f => f.Length) / 1000);
+
+            MessageBox.Show(this, string.Join("\n", filesByTime));
         }
 
         private string Base64ToHexadeciaml(string base64String)
