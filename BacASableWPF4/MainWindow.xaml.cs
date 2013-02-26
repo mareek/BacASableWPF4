@@ -22,6 +22,9 @@ using System.Security.Cryptography;
 using System.IO.Compression;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Win32;
+using System.Net;
+using System.Net.Sockets;
 
 namespace BacASableWPF4
 {
@@ -57,7 +60,188 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            ScanFilesFromFtp();
+            MessageBox.Show(this, GetNetworkTime(TimeSpan.FromMilliseconds(5000)).ToString() + "\n" + DateTime.Now.ToString());
+        }
+
+        //MMO : Code found at this url : http://stackoverflow.com/questions/1193955/how-to-query-an-ntp-server-using-c
+        public static DateTime? GetNetworkTime(TimeSpan timeout)
+        {
+            //default Windows time server
+            const string ntpServer = "pool.ntp.org";
+
+            try
+            {
+                // NTP message size - 16 bytes of the digest (RFC 2030)
+                var ntpData = new byte[48];
+
+                //Setting the Leap Indicator, Version Number and Mode values
+                ntpData[0] = 0x1B; //LI = 0 (no warning), VN = 3 (IPv4 only), Mode = 3 (Client Mode)
+
+                var addresses = Dns.GetHostEntry(ntpServer).AddressList;
+
+                //The UDP port number assigned to NTP is 123
+                var ipEndPoint = new IPEndPoint(addresses[0], 123);
+                //NTP uses UDP
+                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
+                                        {
+                                            SendTimeout = (int)timeout.TotalMilliseconds,
+                                            ReceiveTimeout = (int)timeout.TotalMilliseconds,
+                                        };
+
+                socket.Connect(ipEndPoint);
+
+                socket.Send(ntpData);
+                socket.Receive(ntpData);
+                socket.Close();
+
+                //Offset to get to the "Transmit Timestamp" field (time at which the reply 
+                //departed the server for the client, in 64-bit timestamp format."
+                const byte serverReplyTime = 40;
+
+                //Get the seconds part
+                ulong intPart = BitConverter.ToUInt32(ntpData, serverReplyTime);
+
+                //Get the seconds fraction
+                ulong fractPart = BitConverter.ToUInt32(ntpData, serverReplyTime + 4);
+
+                // stackoverflow.com/a/3294698/162671
+                Func<ulong, uint> swapEndianness = x => (uint)(((x & 0x000000ff) << 24) +
+                                                               ((x & 0x0000ff00) << 8) +
+                                                               ((x & 0x00ff0000) >> 8) +
+                                                               ((x & 0xff000000) >> 24));
+                //Convert From big-endian to little-endian
+                intPart = swapEndianness(intPart);
+                fractPart = swapEndianness(fractPart);
+
+                var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
+
+                //**UTC** time
+                var networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
+
+                return networkDateTime;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void AnalyzeBigBranches(FileInfo architectureFile)
+        {
+            using (var streamReader = architectureFile.OpenText())
+            {
+                var architectureDoc = XDocument.Load(streamReader);
+                var branches = from ap in architectureDoc.Root.Elements()
+                               from headCollector in ap.Elements("Collector")
+                               let miuCount = headCollector.Descendants("Miu").Count()
+                               where miuCount > 250
+                               from childCollector in headCollector.Elements("Collector")
+                               select new
+                               {
+                                   ApSerialNumber = ap.Attribute("SerialNumber").Value,
+                                   HeadCollectorSerialNumber = headCollector.Attribute("SerialNumber").Value,
+                                   BranchMiuCount = miuCount,
+                                   ChildCollector = childCollector.Attribute("SerialNumber").Value,
+                                   MiuCount = childCollector.Descendants("Miu").Count(),
+                               };
+
+
+                var csvHeaderBuffer = new[] { "Access point serial number", "Head of branch collector", "Mius on branch", "Child collector", "Mius on sub branch" };
+                var csvDataBuffer = branches.Select(m => new[] { " " + m.ApSerialNumber, " " + m.HeadCollectorSerialNumber, m.BranchMiuCount.ToString(), m.ChildCollector, m.MiuCount.ToString() }).ToList();
+
+                var fileDialog = new SaveFileDialog { Filter = "( *.csv) | *.csv" };
+                if (fileDialog.ShowDialog(this) ?? false)
+                {
+                    CSVHelper.WriteToFile(new FileInfo(fileDialog.FileName), csvHeaderBuffer, csvDataBuffer);
+                }
+            }
+        }
+
+        private void AnalyzeMiusByCollector(FileInfo architectureFile)
+        {
+            using (var streamReader = architectureFile.OpenText())
+            {
+                var architectureDoc = XDocument.Load(streamReader);
+                var branches = from ap in architectureDoc.Root.Elements()
+                               from collector in ap.Descendants("Collector")
+                               select new
+                               {
+                                   ApSerialNumber = ap.Attribute("SerialNumber").Value,
+                                   CollectorSerialNumber = collector.Attribute("SerialNumber").Value,
+                                   MiuCount = collector.Elements("Miu").Count()
+                               };
+
+
+                var csvHeaderBuffer = new[] { "Access point serial number", "Collector", "Mius on collector" };
+                var csvDataBuffer = branches.Select(m => new[] { " " + m.ApSerialNumber, " " + m.CollectorSerialNumber, m.MiuCount.ToString() }).ToList();
+
+                var fileDialog = new SaveFileDialog { Filter = "( *.csv) | *.csv" };
+                if (fileDialog.ShowDialog(this) ?? false)
+                {
+                    CSVHelper.WriteToFile(new FileInfo(fileDialog.FileName), csvHeaderBuffer, csvDataBuffer);
+                }
+
+            }
+        }
+
+        private void AnalyzeCollectorChilds(FileInfo architectureFile)
+        {
+            using (var streamReader = architectureFile.OpenText())
+            {
+                var architectureDoc = XDocument.Load(streamReader);
+                var branches = from ap in architectureDoc.Root.Elements()
+                               from collector in ap.Descendants("Collector")
+                               select new
+                               {
+                                   ApSerialNumber = ap.Attribute("SerialNumber").Value,
+                                   CollectorSerialNumber = collector.Attribute("SerialNumber").Value,
+                                   CollectorChildsCount = collector.Elements("Collector").Count()
+                               };
+
+                branches = branches.Union(architectureDoc.Root.Elements().Select(ap => new
+                               {
+                                   ApSerialNumber = ap.Attribute("SerialNumber").Value,
+                                   CollectorSerialNumber = "",
+                                   CollectorChildsCount = ap.Elements("Collector").Count()
+                               }));
+
+                var csvHeaderBuffer = new[] { "Access point serial number", "Collector Serial Number", "Child collectors" };
+                var csvDataBuffer = branches.Select(m => new[] { " " + m.ApSerialNumber, " " + m.CollectorSerialNumber, m.CollectorChildsCount.ToString() }).ToList();
+
+                var fileDialog = new SaveFileDialog { Filter = "( *.csv) | *.csv" };
+                if (fileDialog.ShowDialog(this) ?? false)
+                {
+                    CSVHelper.WriteToFile(new FileInfo(fileDialog.FileName), csvHeaderBuffer, csvDataBuffer);
+                }
+
+            }
+        }
+
+        private void AnalyzeMiusByBranch(FileInfo architectureFile)
+        {
+            using (var streamReader = architectureFile.OpenText())
+            {
+                var architectureDoc = XDocument.Load(streamReader);
+                var branches = from ap in architectureDoc.Root.Elements()
+                               from headCollector in ap.Elements("Collector")
+                               select new
+                               {
+                                   ApSerialNumber = ap.Attribute("SerialNumber").Value,
+                                   HeadCollectorSerialNumber = headCollector.Attribute("SerialNumber").Value,
+                                   MiuCount = headCollector.Descendants("Miu").Count()
+                               };
+
+
+                var csvHeaderBuffer = new[] { "Access point serial number", "Head of branch collector", "Mius on branch" };
+                var csvDataBuffer = branches.Select(m => new[] { " " + m.ApSerialNumber, " " + m.HeadCollectorSerialNumber, m.MiuCount.ToString() }).ToList();
+
+                var fileDialog = new SaveFileDialog { Filter = "( *.csv) | *.csv" };
+                if (fileDialog.ShowDialog(this) ?? false)
+                {
+                    CSVHelper.WriteToFile(new FileInfo(fileDialog.FileName), csvHeaderBuffer, csvDataBuffer);
+                }
+
+            }
         }
 
         private void ScanFilesFromFtp()
@@ -72,7 +256,7 @@ namespace BacASableWPF4
 
             var filesByTime = from file in files
                               group file by new { file.LastWriteTime.Hour, file.LastWriteTime.Minute } into grouped
-                              orderby grouped.Key.Hour, grouped.Key.Minute 
+                              orderby grouped.Key.Hour, grouped.Key.Minute
                               select string.Format("{0:00}:{1:00} - {2:000} ({3:0000}Ko) ", grouped.Key.Hour, grouped.Key.Minute, grouped.Count(), grouped.Sum(f => f.Length) / 1000);
 
             MessageBox.Show(this, string.Join("\n", filesByTime));
