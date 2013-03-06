@@ -57,7 +57,53 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, Base64ToHexadeciaml("AABoTU1oCAByhoVTEpImGAzrEAAADHiGhVMSBA8iAQAADBRDEgAAOy2ZmZk7O5mZmQpaUgIKXkICC2EDAQAEbR8LtxECJ3cBCf0OBgn9DwYPIAAQFg=="));
+            var chrono = Stopwatch.StartNew();
+            var pi = CalcPi(5000000);
+            chrono.Stop();
+            var calcPi = chrono.Elapsed;
+
+            chrono = Stopwatch.StartNew();
+            pi = CalcPiParallel(5000000);
+            chrono.Stop();
+            var calcPiParallel = chrono.Elapsed;
+
+
+
+            MessageBox.Show(this, string.Format("CalcPi : {0}\nCalcPiParrallel : {1}", calcPi, calcPiParallel));
+        }
+
+        private decimal CalcPi(decimal itérations)
+        {
+            decimal acc = 0;
+            for (decimal i = 0; i < itérations; i++)
+            {
+                var signe = (i % 2 == 0) ? 1 : -1;
+                acc += signe / (2 * i + 1);
+            }
+            return 4 * acc;
+        }
+
+        private decimal CalcPiParallel(decimal itérations)
+        {
+            if (itérations < 2)
+            {
+                return CalcPi(itérations);
+            }
+            else
+            {
+                Func<decimal, decimal, decimal> accGenerator = (start, inc) =>
+                    {
+                        decimal signe = (start % 2 == 0) ? 1 : -1;
+                        decimal acc = 0;
+                        for (decimal i = start; i < itérations; i += inc)
+                        {
+                            acc += signe / (2 * i + 1);
+                        }
+                        return acc;
+                    };
+                return 4 * (from seed in Enumerable.Range(0, 4).AsParallel()
+                            select accGenerator(seed, 4)).Sum();
+            }
         }
 
         private string Base64ToHexadeciaml(string base64String)
