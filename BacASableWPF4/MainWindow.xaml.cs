@@ -42,7 +42,19 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            LinqForPatriq();
+            DoEncryptPulseMachin();
+        }
+
+        private void DoEncryptPulseMachin()
+        {
+            var machin = EncryptPulseMachin.GetInstance();
+            var sourceFile = new FileInfo(@"C:\Users\mmouriss\Desktop\ItronPulseValues.xml");
+            var destFile = new FileInfo(@"C:\Users\mmouriss\Desktop\ItronPulseValues.xmlenc");
+
+            using (var stramReader = sourceFile.OpenRead())
+            using (var encryptedStram = machin.Encrypt(stramReader))
+            using (var stramWriter = destFile.Create())
+                encryptedStram.CopyTo(stramWriter);
         }
 
         private void LinqForPatriq()

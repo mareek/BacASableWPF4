@@ -128,8 +128,6 @@ namespace BacASableWPF4
 
         #endregion
 
-        #region Constructor + Singleton
-
         /// <summary>
         /// On new instance, initializes the keys
         /// </summary>
@@ -149,19 +147,5 @@ namespace BacASableWPF4
         {
             return s_instance;
         }
-
-
-Cordialement,
-
- 
-Julien Pomez
-R&D Software Engineer
-Phone: (33) 3 85 29 33 23
-Fax: (33) 3 85 29 38 73
-Knowledge to Shape Your Future
-      
-
-
-
     }
 }
