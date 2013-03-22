@@ -35,24 +35,6 @@ namespace BacASableWPF4
     /// 
     public partial class MainWindow : Window
     {
-        private const string PRIVATE_KEY = @"
-<RSAKeyValue>
-  <Modulus>sJKuRsD1Uk6c4rtzOGfuhel1sBGY1J0HxEAWROa21c7yy8zPJxvn6mySsCUYamhBEailK4zyz9He/A48F1GV8R2jR7SlG6ppW/O9ZTUeGL74DQTI8EggY+PfTa9xFSH2Bk5UsgqdsNRk1cOGv67WlJoPL9Vn4JkBFJ6gcHAsfds=</Modulus>
-  <Exponent>AQAB</Exponent>
-  <P>7ZNDkTJzOo2jMTiM11vqHhX9F85S82lOz10Rs3xxzNBR1GSbdcOXOK8tTZWlgsmVn4ErSOXlqDwBI3EBKo+HUw==</P>
-  <Q>vkRMhONQrfyB96ftIYL4+Riw7FWl3vO2KmVEEpyJEur5EGgyyofy7dRReqKqAb+K+iP9TsaU22opiAechauGWQ==</Q>
-  <DP>f0aTvifO/6F9uhLXsVB2nmOdUbGhUvIp3IG5x/R1awp3rFexyWddjmqa1KPFJcolNGyY6dbwMC7lVT1nKIv4LQ==</DP>
-  <DQ>OqXA1GFhGBAyW402idLePaH/vwlzdHK43v6R6g64Lc2h8g28QjN/jRGZ/+wt7RYGl64KQYLylWN248g81fMWGQ==</DQ>
-  <InverseQ>pdUQPLG8kEd1GsYdWeQYkQxoNrolZp/RjRSNAGL8vFurTOFd61GbNT8CVOES0uLA7PM8ZxmxcF98bsiXCRTuyQ==</InverseQ>
-  <D>hki3M2Xx7AuPMrueL8qS0tKuxx1K3n8h9fVLOlE/wTDm42k6LaMCZ/z0PfOoMtxgh/56xrklvDj+3TAyMQXCAlzHsjhrCTGPAUucYWXrKHIXKiICU5QC5f8j0sJqV2YA5qCmUO2ANpxMYGs0xwbU6qCaAjHHgCZDguKCabvB8TE=</D>
-</RSAKeyValue>";
-
-        private const string PUBLIC_KEY = @"
-<RSAKeyValue>
-  <Modulus>sJKuRsD1Uk6c4rtzOGfuhel1sBGY1J0HxEAWROa21c7yy8zPJxvn6mySsCUYamhBEailK4zyz9He/A48F1GV8R2jR7SlG6ppW/O9ZTUeGL74DQTI8EggY+PfTa9xFSH2Bk5UsgqdsNRk1cOGv67WlJoPL9Vn4JkBFJ6gcHAsfds=</Modulus>
-  <Exponent>AQAB</Exponent>
-</RSAKeyValue>";
-
         public MainWindow()
         {
             InitializeComponent();
@@ -60,7 +42,39 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, GetNetworkTime(TimeSpan.FromMilliseconds(5000)).ToString() + "\n" + DateTime.Now.ToString());
+            LinqForPatriq();
+        }
+
+        private void LinqForPatriq()
+        {
+            var oneHourData = from tupleData in GenerateRandomData(TimeSpan.FromSeconds(1), 20).Take(3600)
+                              select new { Time = tupleData.Item1, Value = tupleData.Item2 };
+
+            var trameLuesParMinute = from data in oneHourData
+                                     group data.Value by data.Time.ToString("hh':'mm") into myGroup
+                                     orderby myGroup.Key
+                                     select new { Heure = myGroup.Key, TrameLues = myGroup.Sum() };
+
+            MessageBox.Show(this, string.Join("\n", trameLuesParMinute));
+        }
+
+        private IEnumerable<Tuple<TimeSpan, int>> GenerateRandomData(TimeSpan interval, int max)
+        {
+            var rnd = new Random();
+            var time = TimeSpan.Zero;
+            while (true)
+            {
+                yield return Tuple.Create(time, rnd.Next(max));
+                time += interval;
+            }
+        }
+
+        private void DictionnaryExperiment()
+        {
+            var mydic = new Dictionary<string, string>();
+            mydic["Blue Öyster Cult"] = "Don't fear the Reaper";
+            mydic["Metallica"] = "Enter sandman";
+            MessageBox.Show(this, string.Join(", ", mydic));
         }
 
         //MMO : Code found at this url : http://stackoverflow.com/questions/1193955/how-to-query-an-ntp-server-using-c
@@ -516,6 +530,23 @@ namespace BacASableWPF4
             MessageBox.Show(this, string.Format("20{0}-{1}-{2}", Year, Month, Day));
         }
 
+        private const string PRIVATE_KEY = @"
+<RSAKeyValue>
+  <Modulus>sJKuRsD1Uk6c4rtzOGfuhel1sBGY1J0HxEAWROa21c7yy8zPJxvn6mySsCUYamhBEailK4zyz9He/A48F1GV8R2jR7SlG6ppW/O9ZTUeGL74DQTI8EggY+PfTa9xFSH2Bk5UsgqdsNRk1cOGv67WlJoPL9Vn4JkBFJ6gcHAsfds=</Modulus>
+  <Exponent>AQAB</Exponent>
+  <P>7ZNDkTJzOo2jMTiM11vqHhX9F85S82lOz10Rs3xxzNBR1GSbdcOXOK8tTZWlgsmVn4ErSOXlqDwBI3EBKo+HUw==</P>
+  <Q>vkRMhONQrfyB96ftIYL4+Riw7FWl3vO2KmVEEpyJEur5EGgyyofy7dRReqKqAb+K+iP9TsaU22opiAechauGWQ==</Q>
+  <DP>f0aTvifO/6F9uhLXsVB2nmOdUbGhUvIp3IG5x/R1awp3rFexyWddjmqa1KPFJcolNGyY6dbwMC7lVT1nKIv4LQ==</DP>
+  <DQ>OqXA1GFhGBAyW402idLePaH/vwlzdHK43v6R6g64Lc2h8g28QjN/jRGZ/+wt7RYGl64KQYLylWN248g81fMWGQ==</DQ>
+  <InverseQ>pdUQPLG8kEd1GsYdWeQYkQxoNrolZp/RjRSNAGL8vFurTOFd61GbNT8CVOES0uLA7PM8ZxmxcF98bsiXCRTuyQ==</InverseQ>
+  <D>hki3M2Xx7AuPMrueL8qS0tKuxx1K3n8h9fVLOlE/wTDm42k6LaMCZ/z0PfOoMtxgh/56xrklvDj+3TAyMQXCAlzHsjhrCTGPAUucYWXrKHIXKiICU5QC5f8j0sJqV2YA5qCmUO2ANpxMYGs0xwbU6qCaAjHHgCZDguKCabvB8TE=</D>
+</RSAKeyValue>";
+
+        private const string PUBLIC_KEY = @"
+<RSAKeyValue>
+  <Modulus>sJKuRsD1Uk6c4rtzOGfuhel1sBGY1J0HxEAWROa21c7yy8zPJxvn6mySsCUYamhBEailK4zyz9He/A48F1GV8R2jR7SlG6ppW/O9ZTUeGL74DQTI8EggY+PfTa9xFSH2Bk5UsgqdsNRk1cOGv67WlJoPL9Vn4JkBFJ6gcHAsfds=</Modulus>
+  <Exponent>AQAB</Exponent>
+</RSAKeyValue>";
 
         private void TestRsaSignature()
         {
