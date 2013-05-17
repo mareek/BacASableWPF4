@@ -42,7 +42,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            DoEncryptPulseMachin();
+            TestXmlValidation();
         }
 
         private void DoEncryptPulseMachin()
@@ -342,6 +342,11 @@ namespace BacASableWPF4
         private string Base64ToHexadeciaml(string base64String)
         {
             return Convert.FromBase64String(base64String).ToRawhexString();
+        }
+
+        private string Base64ToCSharpDeclaration(string base64String)
+        {
+            return Convert.FromBase64String(base64String).ToCSharpDeclaration();
         }
 
         private void parseXmlAnne()
@@ -791,10 +796,15 @@ namespace BacASableWPF4
 
         private void TestXmlValidation()
         {
-            var validationEventHandler = new ValidationEventHandler((sender, e) => Console.WriteLine(e.Exception.Message));
+            var validationEventHandler = new ValidationEventHandler((sender, e) =>
+                {
+                    var reader = sender as XmlReader;
+                    
+                    Console.WriteLine("NodeType : {0}\nInfo : {1}\nException : {2}", reader.NodeType, reader.SchemaInfo, e.Exception.ToString());
+                });
 
             XmlSchema schema;
-            using (var stream = File.OpenRead(@"D:\Src\IINT-MCN-EverBluSoftware\branches\2.3\MCN_ERM_WINCE_NET\Actaris\Actaris.ERM.IO\Tools\XSD\routeV22.xsd"))
+            using (var stream = File.OpenRead(@"C:\Users\mmouriss\Desktop\TestXSD\xsd2.xsd"))
             {
                 schema = XmlSchema.Read(stream, validationEventHandler);
             }
@@ -802,10 +812,15 @@ namespace BacASableWPF4
             var readerSettings = new XmlReaderSettings { ValidationType = ValidationType.Schema };
             readerSettings.ValidationEventHandler += validationEventHandler;
             readerSettings.Schemas.Add(schema);
+            readerSettings.ValidationType = ValidationType.Schema;
 
-            using (XmlReader reader = XmlReader.Create(@"C:\Users\mmouriss\Desktop\FdcData_20120921_1344118566.xml", readerSettings))
+            using (XmlReader reader = XmlReader.Create(@"C:\Users\mmouriss\Desktop\shiporder.xml", readerSettings))
             {
-                while (reader.Read()) ;
+                bool continueRead = true;
+                while (continueRead)
+                {
+                    continueRead = reader.Read();
+                }
             }
         }
 
