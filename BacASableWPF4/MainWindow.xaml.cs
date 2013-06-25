@@ -42,7 +42,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            DoEncryptPulseMachin();
+            MessageBox.Show(Solution.ProcessChocolateInput(4, "2 2 3 7").ToString());
         }
 
         private void DoEncryptPulseMachin()
@@ -287,7 +287,7 @@ namespace BacASableWPF4
 
             MessageBox.Show(this, string.Join("\n", filesByTime));
         }
-        
+
         private void BenchPi()
         {
             var chrono = Stopwatch.StartNew();
