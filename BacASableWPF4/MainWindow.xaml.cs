@@ -42,8 +42,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            using (var hashProvider = SHA1.Create())
-                MessageBox.Show(FormatByteArray(hashProvider.ComputeHash(UTF8Encoding.UTF8.GetBytes(GetMotherBoardSerialNumber()))));
+            MessageBox.Show(this, (new DateTime(2013, 8, 2, 17, 00, 00) - DateTime.Now).TotalHours.ToString());
         }
 
         private static string FormatByteArray(byte[] byteArray)
