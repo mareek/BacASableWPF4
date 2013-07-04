@@ -42,7 +42,50 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestXmlValidation();
+            using (var hashProvider = SHA1.Create())
+                MessageBox.Show(FormatByteArray(hashProvider.ComputeHash(UTF8Encoding.UTF8.GetBytes(GetMotherBoardSerialNumber()))));
+        }
+
+        private static string FormatByteArray(byte[] byteArray)
+        {
+            var baseString = Convert.ToBase64String(byteArray).Replace("=", "").Replace('+', 'A').Replace('/', '0').ToUpper();
+
+            const int chunkSize = 4;
+            var builder = new StringBuilder();
+            for (var i = 0; i < baseString.Length - chunkSize; i += chunkSize)
+            {
+                builder.Append(baseString, i, chunkSize);
+                builder.Append('-');
+            }
+            builder.Remove(builder.Length - 1, 1);
+
+            return builder.ToString();
+        }
+
+        private void PrepareFrameForUnitTest()
+        {
+            var x59CombinedHexFrame = "1388855312C01506B6141303000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000142012000033013502FFFFFF2000";
+            var x59HeatHexFrame = "1286855312C00D0FB61422010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000144312000034023202FFFFFF2000";
+            var intelisHexFrame = "0B160B0002B614C8465F850100560055005600560056005500540056005600550056005800560056005600550056005600560056005500560056005600F4010000";
+            Debug.Print("X59 combined : " + HexStringToCSharpDeclaration(x59CombinedHexFrame));
+            Debug.Print("X59 heat : " + HexStringToCSharpDeclaration(x59HeatHexFrame));
+            Debug.Print("Intelis : " + HexStringToCSharpDeclaration(intelisHexFrame));
+        }
+
+        private string HexStringToCSharpDeclaration(string hexString)
+        {
+            return ParseHexString(hexString).ToCSharpDeclaration();
+        }
+
+        private byte[] ParseHexString(string hexData)
+        {
+            var chunkedString = new string[hexData.Length / 2];
+            for (var i = 0; i < chunkedString.Length; i++)
+            {
+                chunkedString[i] = hexData[i * 2].ToString() + hexData[i * 2 + 1].ToString();
+            }
+
+            return chunkedString.Select(s => Convert.ToByte(s, 16)).ToArray();
         }
 
         private void DoEncryptPulseMachin()
@@ -287,7 +330,7 @@ namespace BacASableWPF4
 
             MessageBox.Show(this, string.Join("\n", filesByTime));
         }
-        
+
         private void BenchPi()
         {
             var chrono = Stopwatch.StartNew();
@@ -799,7 +842,7 @@ namespace BacASableWPF4
             var validationEventHandler = new ValidationEventHandler((sender, e) =>
                 {
                     var reader = sender as XmlReader;
-                    
+
                     Console.WriteLine("NodeType : {0}\nInfo : {1}\nException : {2}", reader.NodeType, reader.SchemaInfo, e.Exception.ToString());
                 });
 
