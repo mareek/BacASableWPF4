@@ -42,7 +42,21 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(Solution.ProcessChocolateInput(4, "2 2 3 7").ToString());
+            TestBoyerMoore();
+        }
+
+        private void TestBoyerMoore()
+        {
+            string text = "Stupid Spring String";
+            string searchTerm = "String";
+
+            var singleResult = text.BoyerMooreSearch(searchTerm).ToList();
+
+            text = "La raison est que l’algorithme utilise le tableau après avoir trouvé un caractère qui ne correspond pas. Le tableau lui indique le nombre de positions vers l’avant que l'algorithme doit sauter avant que ce caractère puisse théoriquement correspondre dans le texte. Par exemple, si en vérifiant la neuvième position du texte, l’algorithme trouve un I plutôt qu’un A, cela indiquerait que la prochaine correspondance potentielle pourrait être trouvée une position plus loin vers l’avant, et que la dixième position doit être vérifiée pour y chercher un A. S’il s'agit d’un A, soit l’algorithme le trouve dans la dernière position, et dans ce cas, la vérification est un succès, soit la dernière position a déjà été vérifiée ; dans ce second cas, il n'existe aucun endroit dans le reste de la sous-chaîne clé où le A peut correspondre. De ce fait, aucune correspondance n’est possible jusqu'à ce que l’algorithme cherche complètement au-delà de la position du A.";
+            searchTerm = "algorithme";
+
+            var multipleResults = text.BoyerMooreSearch(searchTerm).ToArray();
+            MessageBox.Show(this, string.Join(", ", multipleResults));
         }
 
         private void DoEncryptPulseMachin()

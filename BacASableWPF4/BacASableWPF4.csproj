@@ -71,6 +71,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="BoyerMoore.cs" />
     <Compile Include="CSVHelper.cs" />
     <Compile Include="EncryptPulseMachin.cs" />
     <Compile Include="EnergyUnit.cs" />
