@@ -42,7 +42,6 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-<<<<<<< HEAD
             TestBoyerMoore();
         }
 
@@ -58,8 +57,6 @@ namespace BacASableWPF4
 
             var multipleResults = text.BoyerMooreSearch(searchTerm).ToArray();
             MessageBox.Show(this, string.Join(", ", multipleResults));
-=======
-            MessageBox.Show(this, (new DateTime(2013, 8, 2, 17, 00, 00) - DateTime.Now).TotalHours.ToString());
         }
 
         private static string FormatByteArray(byte[] byteArray)
@@ -102,7 +99,6 @@ namespace BacASableWPF4
             }
 
             return chunkedString.Select(s => Convert.ToByte(s, 16)).ToArray();
->>>>>>> 3aa0ee501700ea27500e0053ee6e072768845293
         }
 
         private void DoEncryptPulseMachin()
