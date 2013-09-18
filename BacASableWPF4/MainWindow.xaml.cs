@@ -42,7 +42,21 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestBoyerMoore();
+            TestTimeZones();
+        }
+
+        private void TestTimeZones()
+        {
+            var result = string.Join("\n", TimeZoneInfo.GetSystemTimeZones().Select(tz => tz.StandardName.Replace(" ", "") + " (GMT " + tz.BaseUtcOffset.TotalHours.ToString()+") " + tz.DisplayName));
+            MessageBox.Show(this, result);
+        }
+
+        private void TestRegistry()
+        {
+            //HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Updates\UpdateExeVolatile
+            //HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\PendingFileRenameOperations
+
+            var UpdateExeVolatileKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Updates\UpdateExeVolatile");
         }
 
         private void TestBoyerMoore()
