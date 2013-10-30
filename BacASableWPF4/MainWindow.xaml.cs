@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace BacASableWPF4
 {
@@ -42,12 +43,39 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestTimeZones();
+            MessageBox.Show(this, string.Join("\n", AllExistingDatePaterns().Select(p => p.Replace("dd", "d").Replace("MM", "M").Replace("yyyy", "yy")).Distinct().OrderBy(p => p)));
+        }
+
+        private IEnumerable<string> AllExistingDatePaterns()
+        {
+            return CultureInfo.GetCultures(CultureTypes.AllCultures).Select(c => c.DateTimeFormat.ShortDatePattern).Distinct();
+        }
+
+        private void TestFloatingPoint()
+        {
+            double fp1 = 0.1;
+            fp1 = fp1 * 0.1;
+            fp1 = fp1 / 0.1;
+            double fp2 = 0.8;
+            fp2 = fp2 * 0.1;
+            fp2 = fp2 / 0.1;
+            double fp3 = fp1 + fp2;
+            fp3 = fp3 - 0.9;
+            MessageBox.Show(this, fp3.ToString());
+        }
+
+        private void CultureTest()
+        {
+            var currentCulture = CultureInfo.CurrentCulture;
+            var currentUICulture = CultureInfo.CurrentUICulture;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(1033);
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo(1033);
+            var truc = new ManagementObject("");
         }
 
         private void TestTimeZones()
         {
-            var result = string.Join("\n", TimeZoneInfo.GetSystemTimeZones().Select(tz => tz.StandardName.Replace(" ", "") + " (GMT " + tz.BaseUtcOffset.TotalHours.ToString()+") " + tz.DisplayName));
+            var result = string.Join("\n", TimeZoneInfo.GetSystemTimeZones().Select(tz => tz.StandardName.Replace(" ", "") + " (GMT " + tz.BaseUtcOffset.TotalHours.ToString() + ") " + tz.DisplayName));
             MessageBox.Show(this, result);
         }
 
