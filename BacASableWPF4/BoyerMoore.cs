@@ -60,22 +60,45 @@ namespace BacASableWPF4
             return jumpMap;
         }
 
-        private static int[] GeneratePatternJumpMap(string searchTerm)
+        public static int[] GeneratePatternJumpMap(string searchTerm)
         {
-            throw new NotImplementedException("This code is wrong !");
+            //throw new NotImplementedException("This code is wrong !");
 
             var mapLength = Math.Min(256, searchTerm.Length);
             var patternJumpMap = new int[mapLength];
 
-            for (int i = 0; i < mapLength; i++)
-            {
-                var pattern = searchTerm.Substring(searchTerm.Length - i - 1);
-                var patternOccurences = BoyerMooreSearch(searchTerm, pattern, false);
+            //traiter le dernier caractère différemment
+            var lastChar = searchTerm.Last();
+            int lastCharJump = 0;
+            for (var i = searchTerm.Length - 1; i >= 0 && searchTerm[i] == lastChar; i--)
+                lastCharJump++;
+            patternJumpMap[0] = lastCharJump;
 
-                if (patternOccurences.Any())
-                    patternJumpMap[i] = searchTerm.Length - 1 - patternOccurences.Max();
+
+            int? lastPrefixLength = null;
+
+            for (int i = 1; i < mapLength; i++)
+            {
+                var mismatchChar = searchTerm[searchTerm.Length - i - 1];
+                var pattern = searchTerm.Substring(searchTerm.Length - i);
+
+                var jumpCandidates = BoyerMooreSearch(searchTerm, pattern, false)
+                                         .Where(p => p == 0 || searchTerm[p - 1] != mismatchChar)
+                                         .ToArray();
+
+
+                if (jumpCandidates.Any())
+                {
+                    patternJumpMap[i] = searchTerm.Length - jumpCandidates.Max() - pattern.Length;
+                    if (jumpCandidates.Contains(0))
+                    {
+                        lastPrefixLength = i;
+                    }
+                }
                 else
-                    patternJumpMap[i] = searchTerm.Length;
+                {
+                    patternJumpMap[i] = searchTerm.Length - (lastPrefixLength ?? 0);
+                }
             }
 
             return patternJumpMap;

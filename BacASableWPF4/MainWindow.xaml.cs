@@ -98,7 +98,12 @@ namespace BacASableWPF4
             searchTerm = "algorithme";
 
             var multipleResults = text.BoyerMooreSearch(searchTerm).ToArray();
-            MessageBox.Show(this, string.Join(", ", multipleResults));
+            //MessageBox.Show(this, string.Join(", ", multipleResults));
+
+            searchTerm = "anpanman";
+            var patternJumpMap = string.Join(", ", BoyerMoore.GeneratePatternJumpMap(searchTerm));
+            var expectedJumpMap = "1, 8, 3, 6, 6, 6, 6, 6";
+            MessageBox.Show(this, patternJumpMap + "\n" + expectedJumpMap);
         }
 
         private static string FormatByteArray(byte[] byteArray)
