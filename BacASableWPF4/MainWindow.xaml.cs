@@ -43,8 +43,46 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, string.Join("\n", AllExistingDatePaterns().Select(p => p.Replace("dd", "d").Replace("MM", "M").Replace("yyyy", "yy")).Distinct().OrderBy(p => p)));
+            CastAndLinq();
         }
+
+        private void CastAndLinq()
+        {
+            var emptyArray = new decimal?[0];
+            var intDecimals = new decimal?[] { 1m, 2m, 3m, 4m };
+            var easyDecimals = new decimal?[] { 1m, 1.1m, 3500m, 0.7m, 0.1m };
+            var easyDecimalsWithNulls = new decimal?[] { 1m, 1.1m, 3500m, 0.7m, 0.1m };
+            var hardDecimals = new decimal?[] { 1m, 1.000000000001m, 10000000000m, 0.0000000000007m };
+
+            int?[] result;
+
+            result = TestCastMethods(emptyArray);
+            result = TestCastMethods(intDecimals);
+            result = TestCastMethods(easyDecimals);
+            result = TestCastMethods(easyDecimalsWithNulls);
+            result = TestCastMethods(hardDecimals);
+        }
+
+        private int?[] TestCastMethods(decimal?[] decimals)
+        {
+            int?[] result;
+
+            var tempList = new List<int?>();
+            foreach (var dec in decimals)
+            {
+                if (dec.HasValue)
+                    tempList.Add((int)dec);
+                else
+                    tempList.Add(null);
+            }
+
+            result = tempList.ToArray();
+            result = decimals.Select(d => (int?)d).ToArray();
+            result = decimals.Cast<int?>().ToArray();
+
+            return result;
+        }
+
 
         private IEnumerable<string> AllExistingDatePaterns()
         {
