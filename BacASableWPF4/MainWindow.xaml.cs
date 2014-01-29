@@ -43,7 +43,22 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            CastAndLinq();
+            var xsd = new FileInfo(@"C:\Users\mmouriss\Desktop\génération doc route.xml\routeV2.xsd");
+            var xml = new FileInfo(@"C:\Users\mmouriss\Desktop\route.xml");
+
+            if (ValidateXml(xsd, xml))
+                MessageBox.Show(this, "Success !!");
+            else
+                MessageBox.Show(this, "FAILURE !!!!!!!!");
+        }
+
+        private void SubstringArena()
+        {
+            var test = "1234567890";
+            //var result = test.Substring(5, 10); CRASH
+            //var result = test.Remove(19); CRASH too
+            var result = test.PadRight(5); //doesn't crash but doesn't do what I want either
+            MessageBox.Show(this, result + "\n" + result.Length);
         }
 
         private void CastAndLinq()
@@ -937,6 +952,11 @@ namespace BacASableWPF4
 
         private void TestXmlValidation()
         {
+            ValidateXml(new FileInfo(@"C:\Users\mmouriss\Desktop\TestXSD\xsd2.xsd"), new FileInfo(@"C:\Users\mmouriss\Desktop\shiporder.xml"));
+        }
+
+        private bool ValidateXml(FileInfo xsdFile, FileInfo xmlFile)
+        {
             var validationEventHandler = new ValidationEventHandler((sender, e) =>
                 {
                     var reader = sender as XmlReader;
@@ -945,24 +965,21 @@ namespace BacASableWPF4
                 });
 
             XmlSchema schema;
-            using (var stream = File.OpenRead(@"C:\Users\mmouriss\Desktop\TestXSD\xsd2.xsd"))
-            {
+            using (var stream = xsdFile.OpenRead())
                 schema = XmlSchema.Read(stream, validationEventHandler);
-            }
 
             var readerSettings = new XmlReaderSettings { ValidationType = ValidationType.Schema };
             readerSettings.ValidationEventHandler += validationEventHandler;
             readerSettings.Schemas.Add(schema);
-            readerSettings.ValidationType = ValidationType.Schema;
 
-            using (XmlReader reader = XmlReader.Create(@"C:\Users\mmouriss\Desktop\shiporder.xml", readerSettings))
-            {
-                bool continueRead = true;
+            bool continueRead = true;
+
+            using (var fileStream = xmlFile.OpenRead())
+            using (var xmlReader = XmlReader.Create(fileStream, readerSettings))
                 while (continueRead)
-                {
-                    continueRead = reader.Read();
-                }
-            }
+                    continueRead = xmlReader.Read();
+
+            return true;
         }
 
         private Rect GetXkcdBounds(DirectoryInfo xkcdFileDir)
