@@ -43,6 +43,24 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
+            TestMathAbs();
+        }
+
+        private void TestMathAbs()
+        {
+            // a quick test to know if Math.Abs can return a negative value as in Java (cf : http://henrikwarne.com/2014/01/27/a-bug-a-trace-a-test-a-twist/ )
+            // .net throw an OverflowException when passed int.MinValue
+            // as always .net>java
+            int min = int.MinValue;
+            unchecked
+            {
+                var result = Math.Abs(min);
+                MessageBox.Show(this, string.Format("Math.Abs({0}) == {1}", min, result));
+            }
+        }
+
+        private void TestGeneratedRoute()
+        {
             var xsd = new FileInfo(@"C:\Users\mmouriss\Desktop\génération doc route.xml\routeV2.xsd");
             var xml = new FileInfo(@"C:\Users\mmouriss\Desktop\route.xml");
 
