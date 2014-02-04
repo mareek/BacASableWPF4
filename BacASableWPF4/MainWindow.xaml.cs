@@ -43,7 +43,29 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestFlorianFormating();
+            TestCommentsInLinqToXml();
+        }
+
+        private void TestCommentsInLinqToXml()
+        {
+            var root = new XElement("Root",
+                           new XElement("Father_1",
+                               new XElement("Son_1.1"),
+                               new XElement("Son_1.2"),
+                               new XElement("Son_1.3")),
+                           new XElement("Father_2",
+                               new XElement("Son_2.1"),
+                               new XElement("Son_2.2"),
+                               new XElement("Son_2.3")));
+
+            var father1 = root.Element("Father_1");
+            father1.AddAfterSelf(new XComment("This is my comment"));
+
+            var firstElementAfter = father1.ElementsAfterSelf().First();
+            var firstNodeAfter = father1.NodesAfterSelf().First();
+            if (firstNodeAfter is XComment)
+                firstNodeAfter.Remove();
+            MessageBox.Show(this, firstElementAfter + "\n\n" + firstNodeAfter + "\n\n" + root);
         }
 
         private void TestFlorianFormating()
