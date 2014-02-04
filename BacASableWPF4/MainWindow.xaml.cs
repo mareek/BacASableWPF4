@@ -43,7 +43,15 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestMathAbs();
+            TestFlorianFormating();
+        }
+
+        private void TestFlorianFormating()
+        {
+            var propertyName = "PercentTimeInRange";
+            var numIndex = 0;
+            var indexPropertyName = string.Format("{0}_{1:11}", propertyName, numIndex);
+            MessageBox.Show(this, indexPropertyName);
         }
 
         private void TestMathAbs()
