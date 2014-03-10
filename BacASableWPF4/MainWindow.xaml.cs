@@ -43,7 +43,109 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestCommentsInLinqToXml();
+            TestMatthieuQuarterCode();
+            TestCedricQuarterCode();
+            //TestTimeToNextTick(5);
+        }
+
+        private void TestTimeToNextTick(int nbMinutesBetweenTick)
+        {
+            bool hasError = false;
+            var baseDate = DateTime.Now.Date;
+            for (int i = 0; i < 3600; i++)
+            {
+                var testDate = baseDate.AddSeconds(i);
+                var timetoNextTick = GetTimeToNextTick(nbMinutesBetweenTick, testDate);
+                var calculatedQuarterDateTime = testDate.Add(timetoNextTick);
+                hasError = calculatedQuarterDateTime.Minute % nbMinutesBetweenTick != 0
+                           || calculatedQuarterDateTime < testDate
+                           || (calculatedQuarterDateTime - testDate) > TimeSpan.FromMinutes(nbMinutesBetweenTick);
+                if (hasError)
+                {
+                    MessageBox.Show(this, string.Format("Error on {0} : {1}", testDate.ToShortTimeString(), calculatedQuarterDateTime.ToShortTimeString()));
+                    break;
+                }
+            }
+            if (!hasError)
+                MessageBox.Show(this, "Success !!");
+
+        }
+
+        private static DateTime GetDateTimeNextTick(int nbMinutesBetweenTicks, DateTime now)
+        {
+            var nbMinutesFromPreviousTick = now.Minute % nbMinutesBetweenTicks;
+            var dateTimePreviousTick = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute - nbMinutesFromPreviousTick, 0);
+            return dateTimePreviousTick.AddMinutes(nbMinutesBetweenTicks);
+        }
+
+        private static TimeSpan GetTimeToNextTick(int nbMinutesBetweenTicks, DateTime now)
+        {
+            var dateTimeNextTick = GetDateTimeNextTick(nbMinutesBetweenTicks, now);
+            var result = dateTimeNextTick - now;
+
+            if (result > TimeSpan.Zero)
+                return result;
+            else
+                return TimeSpan.Zero;
+        }
+
+        private void TestCedricQuarterCode()
+        {
+            Func<DateTime, int> getNbMinuteToQuarterByCedricP = now =>
+                {
+                    var nowMinute = now.Minute;
+
+                    var quarter = nowMinute < 0 ? 0 : (nowMinute < 15 ? 15 : (nowMinute < 30 ? 30 : 45));
+
+                    return (now.Minute < 45) ? quarter - now.Minute : 60 - now.Minute;
+                };
+
+            bool hasError = false;
+            var baseDate = DateTime.Now;
+            for (int i = 0; i < 3600; i++)
+            {
+                var testDate = baseDate.AddSeconds(i);
+                var nbMinuteToQuarter = getNbMinuteToQuarterByCedricP(testDate);
+                var calculatedQuarterDateTime = testDate.AddMinutes(nbMinuteToQuarter);
+                hasError = calculatedQuarterDateTime.Minute % 15 != 0 
+                           || calculatedQuarterDateTime < testDate 
+                           || (calculatedQuarterDateTime - testDate) > TimeSpan.FromMinutes(15);
+                if (hasError)
+                {
+                    MessageBox.Show(this, string.Format("Cedric Error on {0} : {1}", testDate.Minute, calculatedQuarterDateTime.Minute));
+                    break;
+                }
+            }
+            if (!hasError)
+                MessageBox.Show(this, "Cedric Success !!");
+        }
+
+        private void TestMatthieuQuarterCode()
+        {
+            Func<int, DateTime, DateTime> GetDateTimeNextTick = (nbMinutesBetweenTicks, now) =>
+                {
+                    var nbMinutesFromPreviousTick = now.Minute % nbMinutesBetweenTicks;
+                    var dateTimePreviousTick = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute - nbMinutesFromPreviousTick, 0);
+                    return dateTimePreviousTick.AddMinutes(nbMinutesBetweenTicks);
+                };
+
+            bool hasError = false;
+            var baseDate = DateTime.Now;
+            for (int i = 0; i < 3600; i++)
+            {
+                var testDate = baseDate.AddSeconds(i);
+                var calculatedQuarterDateTime = GetDateTimeNextTick(15, testDate);
+                hasError = calculatedQuarterDateTime.Minute % 15 != 0 
+                           || calculatedQuarterDateTime < testDate 
+                           || (calculatedQuarterDateTime - testDate) > TimeSpan.FromMinutes(15);
+                if (hasError)
+                {
+                    MessageBox.Show(this, string.Format("Matthieu Error on {0} : {1}", testDate.Minute, calculatedQuarterDateTime.Minute));
+                    break;
+                }
+            }
+            if (!hasError)
+                MessageBox.Show(this, "Matthieu Success !!");
         }
 
         private void TestCommentsInLinqToXml()
