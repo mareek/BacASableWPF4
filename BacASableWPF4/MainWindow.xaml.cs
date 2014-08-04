@@ -43,9 +43,12 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestMatthieuQuarterCode();
-            TestCedricQuarterCode();
-            //TestTimeToNextTick(5);
+            TestDateTimeParseExact();
+        }
+
+        private void TestDateTimeParseExact()
+        {
+            MessageBox.Show(this, DateTime.ParseExact("201408031830", "yyyyMMddHHmm", CultureInfo.CurrentCulture).ToString());
         }
 
         private void TestTimeToNextTick(int nbMinutesBetweenTick)
@@ -107,8 +110,8 @@ namespace BacASableWPF4
                 var testDate = baseDate.AddSeconds(i);
                 var nbMinuteToQuarter = getNbMinuteToQuarterByCedricP(testDate);
                 var calculatedQuarterDateTime = testDate.AddMinutes(nbMinuteToQuarter);
-                hasError = calculatedQuarterDateTime.Minute % 15 != 0 
-                           || calculatedQuarterDateTime < testDate 
+                hasError = calculatedQuarterDateTime.Minute % 15 != 0
+                           || calculatedQuarterDateTime < testDate
                            || (calculatedQuarterDateTime - testDate) > TimeSpan.FromMinutes(15);
                 if (hasError)
                 {
@@ -135,8 +138,8 @@ namespace BacASableWPF4
             {
                 var testDate = baseDate.AddSeconds(i);
                 var calculatedQuarterDateTime = GetDateTimeNextTick(15, testDate);
-                hasError = calculatedQuarterDateTime.Minute % 15 != 0 
-                           || calculatedQuarterDateTime < testDate 
+                hasError = calculatedQuarterDateTime.Minute % 15 != 0
+                           || calculatedQuarterDateTime < testDate
                            || (calculatedQuarterDateTime - testDate) > TimeSpan.FromMinutes(15);
                 if (hasError)
                 {
