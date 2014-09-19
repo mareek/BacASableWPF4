@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,7 +43,61 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestDateTimeParseExact();
+            TestEnumConversion();
+        }
+
+        private void TestEnumConversion()
+        {
+            var testValues = new[] { "01", "2", "", "WTF", null, "00", "1,75", "1 000", "1.000", "1,000" };
+
+            var results = testValues.Select(ConvertNullableStrict<MyEnum>);
+
+            MessageBox.Show(this, "[" + string.Join("]\n[", results) + "]");
+        }
+
+        public static T? ConvertNullableStrict<T>(string value) where T : struct
+        {
+            var enumValues = Enum.GetValues(typeof(T));
+
+            int parsedValue;
+            if (int.TryParse(value,out parsedValue)
+                && enumValues.Cast<int>().Contains(parsedValue))
+            {
+                return (T)Enum.ToObject(typeof(T), parsedValue);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private enum MyEnum
+        {
+            FirstValue = 1,
+            SecondValue = 2
+        }
+
+        private void TestNullableDateComparaison()
+        {
+            Func<DateTime?, DateTime?, bool> dateInferiorTo =
+                (d1, d2) => d1 <= d2;
+            Func<DateTime?, DateTime?, string> testDateCouple =
+                (d1, d2) => string.Format("{0} <= {1} == {2}", d1, d2, dateInferiorTo(d1, d2));
+
+            var today = DateTime.Today;
+            var yesterday = today.AddDays(-1);
+
+            var testResults = new[]
+            {
+                testDateCouple(null, null),
+                testDateCouple(null, today),
+                testDateCouple(today, null),
+                testDateCouple(yesterday, today),
+                testDateCouple(today, yesterday),
+                testDateCouple(today, today)
+            };
+
+            MessageBox.Show(this, string.Join("\n", testResults));
         }
 
         private void TestDateTimeParseExact()
