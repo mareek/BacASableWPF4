@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,6 +26,11 @@ using Microsoft.Win32;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using MongoDB.Bson;
+using System.ComponentModel;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.IO;
+using Microsoft.Web.XmlTransform;
 
 namespace BacASableWPF4
 {
@@ -43,7 +48,99 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestEnumConversion();
+            Xdt();
+        }
+
+        private void Xdt()
+        {
+            var transform = new XmlTransformation(@"C:\Users\mourisson\Desktop\Web.Prod.config");
+            var config = new XmlDocument { PreserveWhitespace = true };
+            config.Load(@"C:\Users\mourisson\Desktop\Web.config");
+            transform.Apply(config);
+            config.Save(@"C:\Users\mourisson\Desktop\Web.config.transformed");
+        }
+
+        private void PivotAnalysis()
+        {
+            var pivotDirectory = new DirectoryInfo(@"C:\Users\mourisson\Downloads\pivot_rec");
+            var pivots = pivotDirectory.EnumerateFiles("*.pivot").Select(LoadPivot).ToList();
+
+            /*
+             Declarations>
+                    <Declaration siret="44185769500023" nature="01" type="01" fraction="11" du="01012014" champ="01" depot="01" versionCTSortie="P01V01">
+                        <IndividusDeclares>
+                             <IndividuDeclare refId="11007@0000"/>
+            */
+
+            var individus = (from pivot in pivots
+                             from declaration in pivot.Elements("Declarations").Elements("Declaration")
+                             from individu in declaration.Elements("IndividusDeclares").Elements("IndividuDeclare")
+                             let refId = individu.Attribute("refId").Value
+                             let splitedId = refId.Split('@')
+                             select new
+                             {
+                                 siret = declaration.Attribute("siret").Value,
+                                 individuId = refId,
+                                 matricule = splitedId[0],
+                                 detrompeur = splitedId[1],
+                                 Label = refId + "-" + declaration.Attribute("siret").Value
+                             }).Distinct().OrderBy(i => i.Label).ToList();
+
+            var individusByMatricule = individus.ToLookup(i => i.matricule).Where(l => l.Count() > 1).ToList();
+
+            //var messages = individusByMatricule.Select(l => l.Key + " : " + string.Join(", ", l.Select(i => i.Label)));
+            var messages = individus.Select(i => i.Label);
+
+            MessageBox.Show(string.Join("\n", messages));
+        }
+
+        private XElement LoadPivot(FileInfo pivotFile)
+        {
+            using (var stream = pivotFile.OpenRead())
+            {
+                return XElement.Load(stream);
+            }
+        }
+
+        private void BsonPlayGround()
+        {
+            var strBson = "A5000000025F7400250000004465636C61726174696F6E49676E6F7265642C43656769642E4C696E6B2E446F6D61696E00094576656E7443726561746564417400D251ADA648010000034465636C61726174696F6E4964003700000003506572696F6465001A00000010416E6E656500DE070000104D6F6973000200000000124F726472650045561EB0460400000003526561736F6E000D000000105F7600010000000000";
+            var rawBson = Enumerable.Range(0, strBson.Length)
+                                    .Where(x => x % 2 == 0)
+                                    .Select(x => Convert.ToByte(strBson.Substring(x, 2), 16))
+                                    .ToArray();
+
+            var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(rawBson);
+            var reasonElement = bsonDocument["Reason"];
+            var reasonValue = reasonElement["_v"];
+            var oldReason = reasonValue.AsInt32;
+            var newReason = oldReason + 1;
+            var newReasonValue = BsonValue.Create(newReason);
+            reasonElement["_v"] = newReasonValue;
+
+            bsonDocument.Remove("Reason");
+            bsonDocument.Add("ErrorCode", reasonElement);
+
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var bsonWriter = BsonWriter.Create(memoryStream))
+                {
+                    BsonSerializer.Serialize(bsonWriter, bsonDocument);
+                }
+
+                var newRawBson = memoryStream.ToArray();
+                var newStrBson = BitConverter.ToString(newRawBson).Replace("-", "");
+            }
+
+            Console.WriteLine(bsonDocument);
+        }
+
+        private void TestHashSet()
+        {
+            var testValues = new[] { "1", "1", "2", "2", };
+
+            var hash = new HashSet<string>(testValues);
+            MessageBox.Show(this, string.Format("values count : {0}\nhash count : {1}", testValues.Length, hash.Count));
         }
 
         private void TestEnumConversion()
@@ -60,7 +157,7 @@ namespace BacASableWPF4
             var enumValues = Enum.GetValues(typeof(T));
 
             int parsedValue;
-            if (int.TryParse(value,out parsedValue)
+            if (int.TryParse(value, out parsedValue)
                 && enumValues.Cast<int>().Contains(parsedValue))
             {
                 return (T)Enum.ToObject(typeof(T), parsedValue);
