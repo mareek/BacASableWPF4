@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -48,7 +48,50 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            Xdt();
+            CompareNullableArithmetic();
+        }
+
+        private void CompareNullableArithmetic()
+        {
+            Func<decimal?, decimal?, decimal?> simpleMethod = (a, b) => (a ?? 0) - (b ?? 0);
+            Func<decimal?, decimal?, decimal?> complicatedMethod = (pivot, reference) =>
+                {
+                    decimal? result = 0;
+                    if (pivot.HasValue && reference.HasValue)
+                    {
+                        result = pivot.Value - reference.Value;
+                    }
+                    else if (pivot.HasValue && !reference.HasValue)
+                    {
+                        result = pivot.Value - 0;
+                    }
+                    else if (!pivot.HasValue & reference.HasValue)
+                    {
+                        result = 0 - reference.Value;
+                    }
+
+                    return result;
+                };
+
+            Func<decimal?, decimal?, Tuple<decimal?, decimal?>> tc = (a, b) => Tuple.Create(a, b);
+
+            var jeuDeTest = new[]
+            {
+                tc(5, 3),
+                tc(null, 3),
+                tc(5, null),
+                tc(null, null)
+            };
+
+            foreach (var item in jeuDeTest)
+            {
+                var simpleResult = simpleMethod(item.Item1, item.Item2);
+                var complicatedResult = complicatedMethod(item.Item1, item.Item2);
+
+                Debug.Assert(simpleResult == complicatedResult, string.Format("Simple is wrong on {0}", item));
+            }
+
+            MessageBox.Show(this, "Everything is awesome !");
         }
 
         private void Xdt()
@@ -104,13 +147,16 @@ namespace BacASableWPF4
 
         private void BsonPlayGround()
         {
-            var strBson = "A5000000025F7400250000004465636C61726174696F6E49676E6F7265642C43656769642E4C696E6B2E446F6D61696E00094576656E7443726561746564417400D251ADA648010000034465636C61726174696F6E4964003700000003506572696F6465001A00000010416E6E656500DE070000104D6F6973000200000000124F726472650045561EB0460400000003526561736F6E000D000000105F7600010000000000";
+            var strBson = "F8000000034465636C61726174696F6E4964003700000003506572696F6465001A00000010416E6E656500E2070000104D6F6973000400000000124F726472650081384C7B2609000000034465636C61726174696F6E52656D706C6163616E74654964003700000003506572696F6465001A00000010416E6E656500E2070000104D6F6973000400000000124F7264726500C291BF822609000000025F74003C0000004465636C61726174696F6E4465636C61726174696F6E52656D706C6163616E7465557064617465642C2043656769642E4C696E6B2E446F6D61696E00094576656E7443726561746564417400A1AE5AE64901000000";
             var rawBson = Enumerable.Range(0, strBson.Length)
                                     .Where(x => x % 2 == 0)
                                     .Select(x => Convert.ToByte(strBson.Substring(x, 2), 16))
                                     .ToArray();
 
             var bsonDocument = BsonSerializer.Deserialize<BsonDocument>(rawBson);
+
+            Console.WriteLine(bsonDocument);
+
             var reasonElement = bsonDocument["Reason"];
             var reasonValue = reasonElement["_v"];
             var oldReason = reasonValue.AsInt32;
@@ -131,8 +177,6 @@ namespace BacASableWPF4
                 var newRawBson = memoryStream.ToArray();
                 var newStrBson = BitConverter.ToString(newRawBson).Replace("-", "");
             }
-
-            Console.WriteLine(bsonDocument);
         }
 
         private void TestHashSet()
