@@ -31,6 +31,7 @@ using System.ComponentModel;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.IO;
 using Microsoft.Web.XmlTransform;
+using System.Net.Http;
 
 namespace BacASableWPF4
 {
@@ -48,7 +49,40 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            CompareNullableArithmetic();
+            TestReadStreamAsyncOnHttpResponse();
+        }
+
+        private void TestReadStreamAsyncOnHttpResponse()
+        {
+            var client = new HttpClient();
+            var response = client.GetAsync("http://www.google.fr").Result;
+
+            var l1 = GetResponseLengthTedious(response).Result;
+            var l2 = GetResponseLengthTedious(response).Result; // Fail !
+
+            MessageBox.Show(this, string.Format("l1 : {0}\nl2 : {1}", l1, l2));
+        }
+
+        private async Task<long> GetResponseLength(HttpResponseMessage response)
+        {
+            using (var fileStream = await response.Content.ReadAsStreamAsync())
+            {
+                return fileStream.Length;
+            }
+        }
+
+        private async Task<long> GetResponseLengthTedious(HttpResponseMessage response)
+        {
+            var fileStream = await response.Content.ReadAsStreamAsync();
+            long length = -1;
+            var lastResult = 1;
+            while (lastResult != -1)
+            {
+                lastResult = fileStream.ReadByte();
+                length += 1;
+            }
+
+            return length;
         }
 
         private void CompareNullableArithmetic()
