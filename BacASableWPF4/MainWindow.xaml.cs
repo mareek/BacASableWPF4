@@ -49,7 +49,12 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestReadStreamAsyncOnHttpResponse();
+            Console.Write(GenerateGuidList(286));
+        }
+
+        private string GenerateGuidList(int count)
+        {
+            return string.Join("\n", Enumerable.Range(0, count).Select(_ => Guid.NewGuid().ToString()));
         }
 
         private void TestReadStreamAsyncOnHttpResponse()
