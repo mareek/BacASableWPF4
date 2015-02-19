@@ -50,7 +50,16 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            Console.Write(GenerateFunctionCodeForAssembly(typeof(MainWindow)));
+            TinkerWithILookup();
+        }
+
+        private void TinkerWithILookup()
+        {
+            var baseEnumerable = Enumerable.Range(0, 11);
+            var tableMultiplication = baseEnumerable.Select(i => new { number = i, multiples = baseEnumerable.Select(j => i * j) })
+                                                    .SelectMany(a => a.multiples.Select(m => new { a.number, multiple = m }));
+            var lookup = tableMultiplication.ToLookup(a => a.number);
+            MessageBox.Show(this, string.Join("\n", lookup.Skip(1).Select(e => string.Join(", ", e.Skip(1).Select(a => a.multiple.ToString("00"))))));
         }
 
         public static string GenerateFunctionCodeForAssembly(Type type)
