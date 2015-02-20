@@ -142,7 +142,7 @@ namespace BacASableWPF4
 
         private static string GenerateSpecialTypesDefaultValue(Type type)
         {
-            Func<Type, bool> isIList = t => t.Name.StartsWith("IList") || t.GetInterfaces().Any(i => i.Name.StartsWith("IList"));
+            Func<Type, bool> isICollection = t => t.Name.StartsWith("ICollection") || t.GetInterfaces().Any(i => i.Name.StartsWith("ICollection"));
 
             if (type.IsEnum)
             {
@@ -152,7 +152,7 @@ namespace BacASableWPF4
             {
                 return GenerateTypeDefaultValue(type.GenericTypeArguments[0]);
             }
-            else if (type.IsGenericType && isIList(type))
+            else if (type.IsGenericType && isICollection(type))
             {
                 return "new[] { " + GenerateTypeDefaultValue(type.GenericTypeArguments[0]) + " }";
             }
