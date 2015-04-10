@@ -9,6 +9,10 @@ namespace BacASableWPF4
 {
     static class GenerateCodeHelper
     {
+        private static readonly Type[] IntegerTypes = { typeof(short), typeof(int), typeof(long), typeof(ushort), typeof(uint), typeof(ulong), typeof(byte), typeof(sbyte) };
+        private static readonly Type[] DecimalTypes = { typeof(float), typeof(double), typeof(decimal) };
+        private static readonly Type[] NumericTypes = IntegerTypes.Concat(DecimalTypes).ToArray();
+
         public static string GenerateFunctionCodeForAssembly(Type type)
         {
             var namespaceTypes = type.Assembly.GetTypes().Where(t => t.Namespace == type.Namespace);
@@ -64,34 +68,17 @@ namespace BacASableWPF4
 
         private static string GenerateTypeDefaultValue(Type type)
         {
-            switch (type.FullName)
-            {
-                case "System.Boolean":
-                    return "true";
-                case "System.DateTime":
-                    return "DateTime.Today";
-                case "System.Int16":
-                case "System.Int32":
-                case "System.Int64":
-                case "System.UInt16":
-                case "System.UInt32":
-                case "System.UInt64":
-                case "System.Decimal":
-                case "System.Single":
-                case "System.Double":
-                case "System.Byte":
-                case "System.SByte":
-                    return "0";
-                default:
-                    return GenerateSpecialTypesDefaultValue(type);
-            }
-        }
-
-        private static string GenerateSpecialTypesDefaultValue(Type type)
-        {
             Func<Type, bool> isICollection = t => t.Name.StartsWith("ICollection") || t.GetInterfaces().Any(i => i.Name.StartsWith("ICollection"));
 
-            if (type.IsEnum)
+            if (type == typeof(bool))
+            {
+                return "true";
+            }
+            else if (NumericTypes.Contains(type))
+            {
+                return "0";
+            }
+            else if (type.IsEnum)
             {
                 return type.Name + "." + Enum.GetValues(type).Cast<object>().First().ToString();
             }
@@ -107,22 +94,6 @@ namespace BacASableWPF4
             {
                 return "Generate" + type.Name + "()";
             }
-        }
-
-        private static string GetFullName(Type type)
-        {
-            if (type.IsGenericType)
-            {
-                var cleanName = type.Name.Split('`').First();
-                var namespacedName = type.Namespace + "." + cleanName;
-                var genericParameters = string.Join(", ", type.GenericTypeArguments.Select(GetFullName));
-
-                var fullName = namespacedName + "<" + genericParameters + ">";
-
-                return fullName;
-            }
-
-            return type.FullName;
         }
     }
 }
