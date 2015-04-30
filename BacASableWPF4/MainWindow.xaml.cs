@@ -50,7 +50,50 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MyPrivatePex();
+            ComparePerfsSha1();
+        }
+
+        private void ComparePerfsSha1()
+        {
+            var sha1 = SHA1.Create();
+            var data = new byte[10];
+            new Random().NextBytes(data);
+
+            ComparePerfs("SHA1 Create + Compute", "SHA1 Compute", () => SHA1.Create().ComputeHash(data), () => sha1.ComputeHash(data));
+        }
+
+        private void ComparePerfs(string action1Name, string action2Name, Action action1, Action action2, int timeOutInMilliSeconds = 500)
+        {
+            var reportBuilder = new StringBuilder();
+
+            var action1Time = TimeSpan.Zero;
+            var action2Time = TimeSpan.Zero;
+            var sampleSize = 10;
+
+            while (action1Time.TotalMilliseconds < timeOutInMilliSeconds && action2Time.TotalMilliseconds < timeOutInMilliSeconds)
+            {
+                action1Time = MeasureActionTime(action1, sampleSize);
+                action2Time = MeasureActionTime(action2, sampleSize);
+
+                reportBuilder.AppendFormat("Sample size: {0:n0}\n    chrono {1} : {2}\n    chrono {3} : {4}\n\n", sampleSize, action1Name, action1Time, action2Name, action2Time);
+
+                sampleSize *= 10;
+            }
+
+            MessageBox.Show(this, reportBuilder.ToString());
+        }
+
+        private TimeSpan MeasureActionTime(Action action, int nbIteration)
+        {
+            var chrono = Stopwatch.StartNew();
+
+            for (int i = 0; i < nbIteration; i++)
+            {
+                action();
+            }
+
+            chrono.Stop();
+            return chrono.Elapsed;
         }
 
         private bool IsDefault<T>(T value)
