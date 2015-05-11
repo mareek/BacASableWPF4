@@ -50,7 +50,39 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            ComparePerfsSha1();
+            SumOnNullableDecimals();
+        }
+
+        private void SumOnNullableDecimals()
+        {
+            decimal?[] values = { 1, 2, null, 3 };
+
+            MessageBox.Show(this, values.Sum().ToString());
+        }
+
+        private void FilterLog()
+        {
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\log (1).txt");
+            var codes = GetHttpResponses(logFile).GroupBy(c => c).Select(g => new { Code = g.Key, Count = g.Count() }.ToString());
+
+            MessageBox.Show(this, string.Join("\n", codes));
+        }
+
+        private IEnumerable<string> GetHttpResponses(FileInfo logFile)
+        {
+            using (var fileStream = logFile.OpenText())
+            {
+                while (!fileStream.EndOfStream)
+                {
+                    var line = fileStream.ReadLine();
+                    var splitLine = line.Split(new[] { "HttpResponseStatus : " }, StringSplitOptions.RemoveEmptyEntries);
+                    if (splitLine.Length > 1)
+                    {
+                        yield return splitLine[1].Trim();
+                    }
+                }
+            }
+
         }
 
         private void ComparePerfsSha1()
