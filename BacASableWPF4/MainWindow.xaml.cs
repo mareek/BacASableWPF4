@@ -50,7 +50,32 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            SumOnNullableDecimals();
+            MessageBox.Show(this, string.Join("\n", problemeDeMathALaCon().Count()));
+        }
+
+        private IEnumerable<string> problemeDeMathALaCon()
+        {
+            return from a in Enumerable.Range(1, 9).Reverse()
+                   from b in Enumerable.Range(1, 9).Where(k => !k.In(a))
+                   from c in Enumerable.Range(1, 9).Where(k => !k.In(a, b))
+                   from d in Enumerable.Range(1, 9).Where(k => !k.In(a, b, c))
+                   from e in Enumerable.Range(1, 9).Where(k => !k.In(a, b, c, d))
+                   from f in Enumerable.Range(1, 9).Where(k => !k.In(a, b, c, d, e))
+                   from g in Enumerable.Range(1, 9).Where(k => !k.In(a, b, c, d, e, f))
+                   from h in Enumerable.Range(1, 9).Where(k => !k.In(a, b, c, d, e, f, g))
+                   from i in Enumerable.Range(1, 9).Where(k => !k.In(a, b, c, d, e, f, g, h))
+                   where OperationDeMathALaConBis(a, b, c, d, e, f, g, h, i) == 66
+                   select string.Join(", ", a, b, c, d, e, f, g, h, i);
+        }
+
+        private int OperationDeMathALaCon(int a, int b, int c, int d, int e, int f, int g, int h, int i)
+        {
+            return a + 13 * b / c + d + 12 * e - f - 11 + g * h / i - 10;
+        }
+
+        private int OperationDeMathALaConBis(int a, int b, int c, int d, int e, int f, int g, int h, int i)
+        {
+            return ((((((((((((a + 13) * b) / c) + d) + 12) * e) - f) - 11) + g) * h) / i) - 10);
         }
 
         private void SumOnNullableDecimals()
