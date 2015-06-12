@@ -1,38 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Management;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.IO;
 using System.Xml;
-using System.Security.Principal;
-using System.Xml.Schema;
-using System.Diagnostics;
-using System.Management;
 using System.Xml.Linq;
-using System.Security.Cryptography;
-using System.IO.Compression;
-using System.Globalization;
-using System.Threading.Tasks;
-using Microsoft.Win32;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using MongoDB.Bson;
-using System.ComponentModel;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.IO;
+using System.Xml.Schema;
 using Microsoft.Web.XmlTransform;
-using System.Net.Http;
-using System.Reflection;
+using Microsoft.Win32;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
 
 namespace BacASableWPF4
 {
@@ -50,7 +41,44 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(this, string.Join("\n", problemeDeMathALaCon().Count()));
+            TestMyCode();
+        }
+
+        private void GetAllFuckedUpJeDeclareRetourFromLogFile()
+        {
+            FileInfo logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Link_Warn_du_20150608_0000_au_20150612_1712.txt");
+            using (var textStream = logFile.OpenText())
+            {
+                var allFuckedUpRetours = FindAllFuckedUpJeDeclareRetour(textStream.ReadToEnd()).Distinct();
+                MessageBox.Show(this, string.Join(", ", allFuckedUpRetours));
+            }
+        }
+
+        private void TestMyCode()
+        {
+            const string testInput =
+@"45993829	2015-06-12 08:43:01,753	[210]	WARN	S111000IIS001	Cegid.Link.Web.Api.WebToken.Controllers.Services.Declaration.Retours.UpdateStatutDeclarationsJeDeclareBatch	-	Le document transmis par Net-Entreprises ou JeDeclare ne peut pas être traité (Déclaration: 2015-04-26584397188250, idFlux: 150882542, idRetour: 118567162)
+45993831	2015-06-12 08:43:02,067	[210]	WARN	S111000IIS001	Cegid.Link.Web.Api.WebToken.Controllers.Services.Bilans.BilanAnomalie.BilanDeclarationProcessor	-	Type de retour incorrect : 20 (BAN ou CCO attendu)
+45993833	2015-06-12 08:43:02,067	[210]	WARN	S111000IIS001	Cegid.Link.Web.Api.WebToken.Controllers.Services.Declaration.Retours.UpdateStatutDeclarationsJeDeclareBatch	-	Le document transmis par Net-Entreprises ou JeDeclare ne peut pas être traité (Déclaration: 2015-04-26584366188246, idFlux: 150883166, idRetour: 118567164)
+45993835	2015-06-12 08:43:02,330	[210]	WARN	S111000IIS001	Cegid.Link.Web.Api.WebToken.Controllers.Services.Bilans.BilanAnomalie.BilanDeclarationProcessor	-	Type de retour incorrect : 20 (BAN ou CCO attendu)
+45993837	2015-06-12 08:43:02,330	[210]	WARN	S111000IIS001	Cegid.Link.Web.Api.WebToken.Controllers.Services.Declaration.Retours.UpdateStatutDeclarationsJeDeclareBatch	-	Le document transmis par Net-Entreprises ou JeDeclare ne peut pas être traité (Déclaration: 2015-04-26585653188588, idFlux: 150896148, idRetour: 118569220)";
+
+            var expectedResults = new[] { "150882542", "150883166", "150896148", };
+            var actualResults = FindAllFuckedUpJeDeclareRetour(testInput).Distinct().ToArray();
+
+            var success = !(expectedResults.Except(actualResults).Any() || actualResults.Except(expectedResults).Any());
+            MessageBox.Show(this, "Success : " + success +"\n"+ string.Join("\n", actualResults));
+        }
+
+        private IEnumerable<string> FindAllFuckedUpJeDeclareRetour(string input)
+        {
+            var idRetourRegexp = new Regex("Le document transmis par Net-Entreprises ou JeDeclare ne peut pas être traité.*idFlux: (?<idFlux>[0-9]{1,10}).*idRetour: (?<idRetour>[0-9]{1,10})", RegexOptions.Compiled);
+
+            return from match in idRetourRegexp.Matches(input).Cast<System.Text.RegularExpressions.Match>()
+                   let idRetour = match.Groups["idRetour"].Captures[0].Value
+                   let idFlux = match.Groups["idFlux"].Captures[0].Value
+                   orderby idFlux
+                   select idFlux;
         }
 
         private IEnumerable<string> problemeDeMathALaCon()
