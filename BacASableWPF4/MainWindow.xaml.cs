@@ -46,7 +46,7 @@ namespace BacASableWPF4
 
         private void GetAllFuckedUpJeDeclareRetourFromLogFile()
         {
-            FileInfo logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Link_Warn_du_20150608_0000_au_20150612_1712.txt");
+            FileInfo logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Link_Warn_du_20150616_1700_au_20150618_0953.txt");
             using (var textStream = logFile.OpenText())
             {
                 var allFuckedUpRetours = FindAllFuckedUpJeDeclareRetour(textStream.ReadToEnd()).Distinct();
@@ -72,11 +72,11 @@ namespace BacASableWPF4
 
         private IEnumerable<string> FindAllFuckedUpJeDeclareRetour(string input)
         {
-            var idRetourRegexp = new Regex("Le document transmis par Net-Entreprises ou JeDeclare ne peut pas être traité.*idFlux: (?<idFlux>[0-9]{1,10}).*idRetour: (?<idRetour>[0-9]{1,10})", RegexOptions.Compiled);
+            var idRetourRegexp = new Regex("Le document transmis par Net-Entreprises ou JeDeclare ne peut pas être traité.*idFlux: (?<idFlux>[0-9]{1,10}).*idRetour: (?<idRetour>[0-9]{1,10})");
 
             return from match in idRetourRegexp.Matches(input).Cast<System.Text.RegularExpressions.Match>()
-                   let idRetour = match.Groups["idRetour"].Captures[0].Value
-                   let idFlux = match.Groups["idFlux"].Captures[0].Value
+                   let idRetour = match.Groups["idRetour"].Value
+                   let idFlux = match.Groups["idFlux"].Value
                    orderby idFlux
                    select idFlux;
         }
