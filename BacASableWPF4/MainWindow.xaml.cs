@@ -41,16 +41,71 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            var lineToRemoveRegexp = new Regex(".*Cegid.DsnLink.DataAccess.Databases.Sql.RunSqlCommandService	-	Utilise connexion 'Server=.*;Database=Link;User .*", RegexOptions.Compiled);
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150622_1200_au_20150622_1353.txt");
+            ComputeUpdateProjectionDuration();
+        }
+
+        private void ComputeUpdateProjectionDuration()
+        {
+            var updateProjectionRegex = new Regex("Execute commande sql 'DELETE FROM .*", RegexOptions.Compiled);
+            var endDatabaseRegex = new Regex("End database Environnement-.*", RegexOptions.Compiled);
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log Debug 11h-15h10.txt");
+            var result = ComputeInstructionDuration(logFile, l => updateProjectionRegex.IsMatch(l), l => endDatabaseRegex.IsMatch(l));
+
+            var occurences = result.Item1;
+            var total = result.Item2;
+            var average = new TimeSpan(total.Ticks / occurences);
+
+            MessageBox.Show(this, string.Format("Temps moyen:\t {0}\nTemps total:\t {1}\n", average, total));
+        }
+
+        private Tuple<long, TimeSpan> ComputeInstructionDuration(FileInfo logFile, Predicate<string> prediCateInstruction, Predicate<string> predicatenextInstruction = null)
+        {
+            long occurence = 0;
+            var duration = new TimeSpan();
+
+            using (var textStream = logFile.OpenText())
+            {
+                Action<string> processLine = null;
+
+                processLine = line =>
+                {
+                    if (prediCateInstruction(line) && !textStream.EndOfStream)
+                    {
+                        occurence++;
+                        var nextLine = textStream.ReadLine();
+
+                        if (predicatenextInstruction == null || predicatenextInstruction(nextLine))
+                        {
+                            var currentLogLine = new LogLine(line);
+                            var nextLogLine = new LogLine(nextLine);
+                            duration += (nextLogLine.Date - currentLogLine.Date);
+                        }
+
+                        processLine(nextLine);
+                    }
+                };
+
+                while (!textStream.EndOfStream)
+                {
+                    processLine(textStream.ReadLine());
+                }
+            }
+
+            return Tuple.Create(occurence, duration);
+        }
+
+        private void CleanKimadoLogs()
+        {
+            var lineToRemoveRegex = new Regex(".*Cegid.DsnLink.DataAccess.Databases.Sql.RunSqlCommandService	-	Utilise connexion 'Server=.*;Database=Link;User .*", RegexOptions.Compiled);
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150622_1500_au_20150622_1552.txt");
             var outputFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log Debug.txt");
 
-            CleanLogFile(logFile, outputFile, lineToRemoveRegexp);
+            CleanLogFile(logFile, outputFile, lineToRemoveRegex);
 
             MessageBox.Show(this, "Success !");
         }
 
-        private void CleanLogFile(FileInfo logFile, FileInfo outputFile, Regex lineToRemoveRegexp)
+        private void CleanLogFile(FileInfo logFile, FileInfo outputFile, Regex lineToRemoveRegex)
         {
             if (outputFile.Exists)
             {
@@ -63,7 +118,7 @@ namespace BacASableWPF4
                 while (!textStream.EndOfStream)
                 {
                     var line = textStream.ReadLine();
-                    if (!lineToRemoveRegexp.IsMatch(line))
+                    if (!lineToRemoveRegex.IsMatch(line))
                     {
                         outputStream.WriteLine(line);
                     }

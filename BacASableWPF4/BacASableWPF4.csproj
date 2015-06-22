@@ -91,6 +91,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="GenerateCodeHelper.cs" />
     <Compile Include="HackerRank.cs" />
+    <Compile Include="LogLine.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
