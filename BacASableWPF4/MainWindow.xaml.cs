@@ -41,7 +41,105 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestMyCode();
+            var lineToRemoveRegexp = new Regex(".*Cegid.DsnLink.DataAccess.Databases.Sql.RunSqlCommandService	-	Utilise connexion 'Server=.*;Database=Link;User .*", RegexOptions.Compiled);
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150622_1200_au_20150622_1353.txt");
+            var outputFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log Debug.txt");
+
+            CleanLogFile(logFile, outputFile, lineToRemoveRegexp);
+
+            MessageBox.Show(this, "Success !");
+        }
+
+        private void CleanLogFile(FileInfo logFile, FileInfo outputFile, Regex lineToRemoveRegexp)
+        {
+            if (outputFile.Exists)
+            {
+                throw new FileLoadException("Output file already exists;");
+            }
+
+            using (var outputStream = outputFile.CreateText())
+            using (var textStream = logFile.OpenText())
+            {
+                while (!textStream.EndOfStream)
+                {
+                    var line = textStream.ReadLine();
+                    if (!lineToRemoveRegexp.IsMatch(line))
+                    {
+                        outputStream.WriteLine(line);
+                    }
+                }
+            }
+        }
+
+        private void CompareCleanlogRegexp()
+        {
+            const string strRegex = ".*Cegid.DsnLink.DataAccess.Databases.Sql.RunSqlCommandService	-	Utilise connexion 'Server=.*;Database=Link;User .*";
+            var compiled = new Regex(strRegex, RegexOptions.Compiled);
+            var interpreted = new Regex(strRegex);
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150622_1110_au_20150622_1202.txt");
+
+            CompareRegexpPerfs(logFile, "Compiled", compiled, "Simple", interpreted);
+        }
+
+        private void CompareRegexpPerfs(FileInfo testFile, string name1, Regex regex1, string name2, Regex regex2)
+        {
+            var controlRun = TestRegexPerfsTemoin(testFile);
+            var runRegex1 = TestRegexPerfs(testFile, regex1);
+            var runRegex2 = TestRegexPerfs(testFile, regex2);
+
+            if (runRegex1.Item1 != runRegex2.Item1 || runRegex1.Item1 > controlRun.Item1)
+            {
+                MessageBox.Show(this, "Resultats incohérents", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            else
+            {
+                Func<string, Tuple<int, TimeSpan>, string> formatResult = (name, result) => string.Format("{0} \t : {1}\n", name, result.Item2);
+
+                var message = formatResult("Témoin", controlRun)
+                              + formatResult(name1, runRegex1)
+                              + formatResult(name2, runRegex2);
+
+                MessageBox.Show(this, message, "Bench", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private Tuple<int, TimeSpan> TestRegexPerfs(FileInfo testFile, Regex regex)
+        {
+            using (var textStream = testFile.OpenText())
+            {
+                var chrono = Stopwatch.StartNew();
+                int nbResult = 0;
+
+                while (!textStream.EndOfStream)
+                {
+                    var line = textStream.ReadLine();
+                    if (!regex.IsMatch(line))
+                    {
+                        nbResult++;
+                    }
+                }
+
+                chrono.Stop();
+                return Tuple.Create(nbResult, chrono.Elapsed);
+            }
+        }
+
+        private Tuple<int, TimeSpan> TestRegexPerfsTemoin(FileInfo testFile)
+        {
+            using (var textStream = testFile.OpenText())
+            {
+                var chrono = Stopwatch.StartNew();
+                int nbResult = 0;
+
+                while (!textStream.EndOfStream)
+                {
+                    var line = textStream.ReadLine();
+                    nbResult++;
+                }
+
+                chrono.Stop();
+                return Tuple.Create(nbResult, chrono.Elapsed);
+            }
         }
 
         private void GetAllFuckedUpJeDeclareRetourFromLogFile()
@@ -67,7 +165,7 @@ namespace BacASableWPF4
             var actualResults = FindAllFuckedUpJeDeclareRetour(testInput).Distinct().ToArray();
 
             var success = !(expectedResults.Except(actualResults).Any() || actualResults.Except(expectedResults).Any());
-            MessageBox.Show(this, "Success : " + success +"\n"+ string.Join("\n", actualResults));
+            MessageBox.Show(this, "Success : " + success + "\n" + string.Join("\n", actualResults));
         }
 
         private IEnumerable<string> FindAllFuckedUpJeDeclareRetour(string input)
