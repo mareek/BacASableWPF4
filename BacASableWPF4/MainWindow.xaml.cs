@@ -42,23 +42,33 @@ namespace BacASableWPF4
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
             ComputeUpdateProjectionDuration();
+            ComputeInsertDuration();
+        }
+
+        private void ComputeInsertDuration()
+        {
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150623_1629_au_20150623_1743.txt");
+
+            ShowResult(ComputeInstructionDuration(logFile, l => l.Contains("Execute commande sql 'INSERT INTO Events (DatabaseName, AggregateName, AggregateId,")), "Insertion events");
         }
 
         private void ComputeUpdateProjectionDuration()
         {
-            var updateProjectionRegex = new Regex("Execute commande sql 'DELETE FROM .*", RegexOptions.Compiled);
-            var endDatabaseRegex = new Regex("End database Environnement-.*", RegexOptions.Compiled);
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log Debug 11h-15h10.txt");
-            var result = ComputeInstructionDuration(logFile, l => updateProjectionRegex.IsMatch(l), l => endDatabaseRegex.IsMatch(l));
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150623_1629_au_20150623_1743.txt");
 
+            ShowResult(ComputeInstructionDuration(logFile, l => l.Contains("Execute commande sql 'DELETE FROM")), "Update projection");
+        }
+
+        private void ShowResult(Tuple<long, TimeSpan> result, string title)
+        {
             var occurences = result.Item1;
             var total = result.Item2;
             var average = new TimeSpan(total.Ticks / occurences);
 
-            MessageBox.Show(this, string.Format("Temps moyen:\t {0}\nTemps total:\t {1}\n", average, total));
+            MessageBox.Show(this, string.Format("Occurences:\t {0}\nTemps moyen:\t {1}\nTemps total:\t {2}\n", occurences, average, total), title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private Tuple<long, TimeSpan> ComputeInstructionDuration(FileInfo logFile, Predicate<string> prediCateInstruction, Predicate<string> predicatenextInstruction = null)
+        private Tuple<long, TimeSpan> ComputeInstructionDuration(FileInfo logFile, Predicate<string> predicateInstruction, Predicate<string> predicateNextInstruction = null)
         {
             long occurence = 0;
             var duration = new TimeSpan();
@@ -69,13 +79,13 @@ namespace BacASableWPF4
 
                 processLine = line =>
                 {
-                    if (prediCateInstruction(line) && !textStream.EndOfStream)
+                    if (predicateInstruction(line) && !textStream.EndOfStream)
                     {
-                        occurence++;
                         var nextLine = textStream.ReadLine();
 
-                        if (predicatenextInstruction == null || predicatenextInstruction(nextLine))
+                        if (predicateNextInstruction == null || predicateNextInstruction(nextLine))
                         {
+                            occurence++;
                             var currentLogLine = new LogLine(line);
                             var nextLogLine = new LogLine(nextLine);
                             duration += (nextLogLine.Date - currentLogLine.Date);
