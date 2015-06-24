@@ -41,8 +41,14 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            ComputeUpdateProjectionDuration();
-            ComputeInsertDuration();
+            ComputeTimeByDatabase();
+        }
+
+        private void ComputeTimeByDatabase()
+        {
+            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150623_1629_au_20150623_2359.txt");
+            var timeByDatabase = ComputeDatabaseProcessingDuration(logFile);
+            ShowResult(Tuple.Create((long)timeByDatabase.Count, timeByDatabase.Values.Aggregate((a, b) => a + b)), "Temps par Db");
         }
 
         private void ComputeInsertDuration()
@@ -66,6 +72,46 @@ namespace BacASableWPF4
             var average = new TimeSpan(total.Ticks / occurences);
 
             MessageBox.Show(this, string.Format("Occurences:\t {0}\nTemps moyen:\t {1}\nTemps total:\t {2}\n", occurences, average, total), title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private Dictionary<string, TimeSpan> ComputeDatabaseProcessingDuration(FileInfo logFile)
+        {
+            var useDatabaseRegex = new Regex(@"Cegid.Link.Updater.Core.Loggers.Log4NetEventTransformationLogger\t-\tUse database (?<DatabaseName>\S*)", RegexOptions.Compiled);
+            var endDatabaseRegex = new Regex(@"Cegid.Link.Updater.Core.Loggers.Log4NetEventTransformationLogger\t-\tEnd database (?<DatabaseName>\S*)", RegexOptions.Compiled);
+
+            var useDatabaseLineByDatabaseName = new Dictionary<string, LogLine>();
+            var endDatabaseLineByDatabaseName = new Dictionary<string, LogLine>();
+
+            using (var textStream = logFile.OpenText())
+            {
+                Action<string, Regex, Dictionary<string, LogLine>> addLineToDicIfMatch = (line, regex, dico) =>
+                    {
+                        var regexResult = regex.Match(line);
+                        if (regexResult.Success)
+                        {
+                            dico.Add(regexResult.Groups["DatabaseName"].Value, new LogLine(line));
+                        }
+                    };
+
+                while (!textStream.EndOfStream)
+                {
+                    var line = textStream.ReadLine();
+                    addLineToDicIfMatch(line, useDatabaseRegex, useDatabaseLineByDatabaseName);
+                    addLineToDicIfMatch(line, endDatabaseRegex, endDatabaseLineByDatabaseName);
+                }
+            }
+
+            var result = new Dictionary<string, TimeSpan>();
+
+            foreach (var databaseName in useDatabaseLineByDatabaseName.Keys)
+            {
+                var useLine = useDatabaseLineByDatabaseName[databaseName];
+                var endLine = endDatabaseLineByDatabaseName[databaseName];
+
+                result.Add(databaseName, endLine.Date - useLine.Date);
+            }
+
+            return result;
         }
 
         private Tuple<long, TimeSpan> ComputeInstructionDuration(FileInfo logFile, Predicate<string> predicateInstruction, Predicate<string> predicateNextInstruction = null)
