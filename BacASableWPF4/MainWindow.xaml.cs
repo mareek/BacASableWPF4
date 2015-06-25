@@ -41,7 +41,25 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            ComputeTimeByDatabase();
+            TestHttpClientTimeout();
+        }
+
+        private async void TestHttpClientTimeout()
+        {
+            var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate });
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.Timeout = TimeSpan.FromMilliseconds(1);
+            client.BaseAddress = new Uri("http://www.w3c.org");
+
+            try
+            {
+                var response = await client.GetAsync("");
+                MessageBox.Show(response.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.GetType().ToString());
+            }
         }
 
         private void ComputeTimeByDatabase()
