@@ -41,7 +41,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestHttpClientTimeout();
+            GetAllFuckedUpJeDeclareRetourFromLogFile();
         }
 
         private async void TestHttpClientTimeout()
@@ -273,7 +273,7 @@ namespace BacASableWPF4
 
         private void GetAllFuckedUpJeDeclareRetourFromLogFile()
         {
-            FileInfo logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Link_Warn_du_20150616_1700_au_20150618_0953.txt");
+            FileInfo logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Link_Warn_du_20150622_0000_au_20150626_1651.txt");
             using (var textStream = logFile.OpenText())
             {
                 var allFuckedUpRetours = FindAllFuckedUpJeDeclareRetour(textStream.ReadToEnd()).Distinct();
