@@ -41,7 +41,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            GetAllFuckedUpJeDeclareRetourFromLogFile();
+            ComputeTimeByDatabase(new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150629_0000_au_20150629_1119.txt"), "AddCotisationIndividuelleEtatInEtatCotisationIndividuelleProjection");
         }
 
         private async void TestHttpClientTimeout()
@@ -62,24 +62,19 @@ namespace BacASableWPF4
             }
         }
 
-        private void ComputeTimeByDatabase()
+        private void ComputeTimeByDatabase(FileInfo logFile, string forTransformation = null)
         {
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150623_1629_au_20150623_2359.txt");
-            var timeByDatabase = ComputeDatabaseProcessingDuration(logFile);
+            var timeByDatabase = ComputeDatabaseProcessingDuration(logFile, forTransformation);
             ShowResult(Tuple.Create((long)timeByDatabase.Count, timeByDatabase.Values.Aggregate((a, b) => a + b)), "Temps par Db");
         }
 
-        private void ComputeInsertDuration()
+        private void ComputeInsertDuration(FileInfo logFile)
         {
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150623_1629_au_20150623_1743.txt");
-
             ShowResult(ComputeInstructionDuration(logFile, l => l.Contains("Execute commande sql 'INSERT INTO Events (DatabaseName, AggregateName, AggregateId,")), "Insertion events");
         }
 
-        private void ComputeUpdateProjectionDuration()
+        private void ComputeUpdateProjectionDuration(FileInfo logFile)
         {
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150623_1629_au_20150623_1743.txt");
-
             ShowResult(ComputeInstructionDuration(logFile, l => l.Contains("Execute commande sql 'DELETE FROM")), "Update projection");
         }
 
@@ -92,10 +87,12 @@ namespace BacASableWPF4
             MessageBox.Show(this, string.Format("Occurences:\t {0}\nTemps moyen:\t {1}\nTemps total:\t {2}\n", occurences, average, total), title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private Dictionary<string, TimeSpan> ComputeDatabaseProcessingDuration(FileInfo logFile)
+        private Dictionary<string, TimeSpan> ComputeDatabaseProcessingDuration(FileInfo logFile, string forTransformation = null)
         {
             var useDatabaseRegex = new Regex(@"Cegid.Link.Updater.Core.Loggers.Log4NetEventTransformationLogger\t-\tUse database (?<DatabaseName>\S*)", RegexOptions.Compiled);
             var endDatabaseRegex = new Regex(@"Cegid.Link.Updater.Core.Loggers.Log4NetEventTransformationLogger\t-\tEnd database (?<DatabaseName>\S*)", RegexOptions.Compiled);
+            var startTransformationRegex = new Regex(@"Start transformation : (?<Transformation>\S*)", RegexOptions.Compiled);
+            var endTransformationRegex = new Regex(@"End transformation : (?<Transformation>\S*)", RegexOptions.Compiled);
 
             var useDatabaseLineByDatabaseName = new Dictionary<string, LogLine>();
             var endDatabaseLineByDatabaseName = new Dictionary<string, LogLine>();
@@ -111,11 +108,21 @@ namespace BacASableWPF4
                         }
                     };
 
+                bool recording = forTransformation == null;
                 while (!textStream.EndOfStream)
                 {
                     var line = textStream.ReadLine();
-                    addLineToDicIfMatch(line, useDatabaseRegex, useDatabaseLineByDatabaseName);
-                    addLineToDicIfMatch(line, endDatabaseRegex, endDatabaseLineByDatabaseName);
+                    if (!recording)
+                    {
+                        recording = startTransformationRegex.Match(line).Groups["Transformation"].Value == forTransformation;
+                    }
+                    else
+                    {
+                        addLineToDicIfMatch(line, useDatabaseRegex, useDatabaseLineByDatabaseName);
+                        addLineToDicIfMatch(line, endDatabaseRegex, endDatabaseLineByDatabaseName);
+
+                        recording = endTransformationRegex.Match(line).Groups["Transformation"].Value != forTransformation;
+                    }
                 }
             }
 
@@ -124,9 +131,15 @@ namespace BacASableWPF4
             foreach (var databaseName in useDatabaseLineByDatabaseName.Keys)
             {
                 var useLine = useDatabaseLineByDatabaseName[databaseName];
-                var endLine = endDatabaseLineByDatabaseName[databaseName];
-
-                result.Add(databaseName, endLine.Date - useLine.Date);
+                LogLine endLine;
+                if (endDatabaseLineByDatabaseName.TryGetValue(databaseName, out endLine))
+                {
+                    result.Add(databaseName, endLine.Date - useLine.Date);
+                }
+                else
+                {
+                    Console.WriteLine("Traitement en cours sur " + databaseName);
+                }
             }
 
             return result;
@@ -271,9 +284,8 @@ namespace BacASableWPF4
             }
         }
 
-        private void GetAllFuckedUpJeDeclareRetourFromLogFile()
+        private void GetAllFuckedUpJeDeclareRetourFromLogFile(FileInfo logFile)
         {
-            FileInfo logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Link_Warn_du_20150622_0000_au_20150626_1651.txt");
             using (var textStream = logFile.OpenText())
             {
                 var allFuckedUpRetours = FindAllFuckedUpJeDeclareRetour(textStream.ReadToEnd()).Distinct();
