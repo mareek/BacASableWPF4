@@ -485,7 +485,7 @@ namespace BacASableWPF4
             return string.Join("\n", Enumerable.Range(0, count).Select(_ => Guid.NewGuid().ToString()));
         }
 
-        private void TestReadStreamAsyncOnHttpResponse()
+        private void TestReadStreamAysncOnHttpResponse()
         {
             var client = new HttpClient();
             var response = client.GetAsync("http://www.google.fr").Result;
