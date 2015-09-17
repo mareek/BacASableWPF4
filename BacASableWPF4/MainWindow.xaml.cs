@@ -24,6 +24,8 @@ using Microsoft.Win32;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Options;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace BacASableWPF4
 {
@@ -41,7 +43,15 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            ComputeTimeByDatabase(new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150629_0000_au_20150629_1119.txt"), "AddCotisationIndividuelleEtatInEtatCotisationIndividuelleProjection");
+            testMongoDbDateTimeSerialization();
+        }
+
+        private void testMongoDbDateTimeSerialization()
+        {
+            var dateTest = Tuple.Create(new DateTime(2015, 5, 1, 0, 0, 0, DateTimeKind.Local));
+            var serialized = dateTest.ToBson(DateTimeSerializationOptions.LocalInstance);
+            var deserialized = BsonSerializer.Deserialize<Tuple<DateTime>>(serialized);
+            MessageBox.Show(this, string.Format("original:\t {0}\nserialized:\t {1}", dateTest.Item1.Kind, deserialized.Item1.Kind));
         }
 
         private async void TestHttpClientTimeout()
