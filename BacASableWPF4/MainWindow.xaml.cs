@@ -43,10 +43,35 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            testMongoDbDateTimeSerialization();
+            MeasureDurationForGeneratingPossiblesNirsOfJMA();
         }
 
-        private void testMongoDbDateTimeSerialization()
+        private void MeasureDurationForGeneratingPossiblesNirsOfJMA()
+        {
+            var chrono = Stopwatch.StartNew();
+            var nirHashes = GeneratePossiblesHashOfNir(1, 49, 3, 69);
+            chrono.Stop();
+
+            MessageBox.Show(this, chrono.Elapsed.ToString());
+        }
+
+        private List<byte[]> GeneratePossiblesHashOfNir(byte sexe, byte yearOfBirth, byte monthOfBirth, byte departement)
+        {
+            var baseNir = sexe.ToString("0")
+                        + yearOfBirth.ToString("00")
+                        + monthOfBirth.ToString("00")
+                        + departement.ToString("00");
+
+            var possibleNirs = from commune in Enumerable.Range(1, 998)
+                               from ordre in Enumerable.Range(1, 998)
+                               select baseNir + commune.ToString("000") + ordre.ToString("000");
+
+            var sha1 = SHA1CryptoServiceProvider.Create();
+
+            return possibleNirs.Select(nir => sha1.ComputeHash(Encoding.UTF8.GetBytes(nir))).ToList();
+        }
+
+        private void TestMongoDbDateTimeSerialization()
         {
             var dateTest = Tuple.Create(new DateTime(2015, 5, 1, 0, 0, 0, DateTimeKind.Local));
             var serialized = dateTest.ToBson(DateTimeSerializationOptions.LocalInstance);
