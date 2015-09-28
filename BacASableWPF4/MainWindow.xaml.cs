@@ -43,7 +43,46 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MeasureDurationForGeneratingPossiblesNirsOfJMA();
+            BenchCryptoServiceProvider();
+        }
+
+        private void BenchCryptoServiceProvider()
+        {
+            const string eventToCrypt = "{ \"AggregateName\" : \"DeclarationMensuelEntity\", \"AggregateId\" : \"Mensuelle, Fraction:1, Du:2015-04, Dépot:General, Siret:12345678900355\", \"Event\" : { \"_t\" : \"DeclarationMensuelDateReferenceIndividuSet,Cegid.Link.Domain\", \"EventCreatedAt\" : ISODate(\"2015-07-09T14:08:46.03Z\"), \"Perimetre\" : { \"NumeroFraction\" : { \"Valeur\" : 1 }, \"Periode\" : { \"Annee\" : 2015, \"Mois\" : 4 }, \"Depot\" : { \"_v\" : 1 }, \"Siret\" : { \"Siren\" : { \"Value\" : \"123456789\" }, \"Nic\" : { \"Value\" : \"00355\" } } }, \"DateReferenceIndividu\" : { \"Date\" : { \"Annee\" : 2014, \"Mois\" : 10 } } }, \"AggregateVersion\" : 3 }";
+            var plainInput = Encoding.UTF8.GetBytes(eventToCrypt);
+            var existingProvider = CreateCryptoServiceProvider();
+
+            Func<AesCryptoServiceProvider, int> encryptDecrypt = provider =>
+                {
+                    using (var encryptor = provider.CreateEncryptor())
+                    using (var decryptor = provider.CreateEncryptor())
+                    {
+                        var encryptedResult = encryptor.TransformFinalBlock(plainInput, 0, plainInput.Length);
+                        var decryptedResult = decryptor.TransformFinalBlock(encryptedResult, 0, encryptedResult.Length);
+                        return decryptedResult.Length;
+                    }
+                };
+
+            Action encryptDecryptWithProvider = () => encryptDecrypt(existingProvider);
+            Action encryptDecryptWithoutProvider = () => encryptDecrypt(CreateCryptoServiceProvider());
+
+            ComparePerfs("With provider", "Without provider", encryptDecryptWithProvider, encryptDecryptWithoutProvider);
+        }
+
+        private AesCryptoServiceProvider CreateCryptoServiceProvider()
+        {
+            const string key = "2gdf25412dfg31ZQ";
+            const string iv = "DdsfgdfgDSfghG35";
+
+            return new AesCryptoServiceProvider
+            {
+                BlockSize = 128,
+                KeySize = 128,
+                Key = Encoding.UTF8.GetBytes(key),
+                IV = Encoding.UTF8.GetBytes(iv),
+                Padding = PaddingMode.PKCS7,
+                Mode = CipherMode.CBC
+            };
         }
 
         private void MeasureDurationForGeneratingPossiblesNirsOfJMA()
