@@ -46,6 +46,12 @@ namespace BacASableWPF4
             BenchCryptoServiceProvider();
         }
 
+        private void TestEnumsLinqCast()
+        {
+            var enums = new[] { PaddingMode.None, PaddingMode.PKCS7, PaddingMode.Zeros, PaddingMode.ANSIX923, PaddingMode.ISO10126, PaddingMode.PKCS7 | PaddingMode.ANSIX923 };
+            MessageBox.Show(this, string.Join(", ", enums) + "\n" + string.Join(", ", enums.Cast<int>()));
+        }
+
         private void BenchCryptoServiceProvider()
         {
             const string eventToCrypt = "{ \"AggregateName\" : \"DeclarationMensuelEntity\", \"AggregateId\" : \"Mensuelle, Fraction:1, Du:2015-04, Dépot:General, Siret:12345678900355\", \"Event\" : { \"_t\" : \"DeclarationMensuelDateReferenceIndividuSet,Cegid.Link.Domain\", \"EventCreatedAt\" : ISODate(\"2015-07-09T14:08:46.03Z\"), \"Perimetre\" : { \"NumeroFraction\" : { \"Valeur\" : 1 }, \"Periode\" : { \"Annee\" : 2015, \"Mois\" : 4 }, \"Depot\" : { \"_v\" : 1 }, \"Siret\" : { \"Siren\" : { \"Value\" : \"123456789\" }, \"Nic\" : { \"Value\" : \"00355\" } } }, \"DateReferenceIndividu\" : { \"Date\" : { \"Annee\" : 2014, \"Mois\" : 10 } } }, \"AggregateVersion\" : 3 }";
@@ -1154,10 +1160,10 @@ namespace BacASableWPF4
                 var ipEndPoint = new IPEndPoint(addresses[0], 123);
                 //NTP uses UDP
                 var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
-                                        {
-                                            SendTimeout = (int)timeout.TotalMilliseconds,
-                                            ReceiveTimeout = (int)timeout.TotalMilliseconds,
-                                        };
+                {
+                    SendTimeout = (int)timeout.TotalMilliseconds,
+                    ReceiveTimeout = (int)timeout.TotalMilliseconds,
+                };
 
                 socket.Connect(ipEndPoint);
 
@@ -1270,11 +1276,11 @@ namespace BacASableWPF4
                                };
 
                 branches = branches.Union(architectureDoc.Root.Elements().Select(ap => new
-                               {
-                                   ApSerialNumber = ap.Attribute("SerialNumber").Value,
-                                   CollectorSerialNumber = "",
-                                   CollectorChildsCount = ap.Elements("Collector").Count()
-                               }));
+                {
+                    ApSerialNumber = ap.Attribute("SerialNumber").Value,
+                    CollectorSerialNumber = "",
+                    CollectorChildsCount = ap.Elements("Collector").Count()
+                }));
 
                 var csvHeaderBuffer = new[] { "Access point serial number", "Collector Serial Number", "Child collectors" };
                 var csvDataBuffer = branches.Select(m => new[] { " " + m.ApSerialNumber, " " + m.CollectorSerialNumber, m.CollectorChildsCount.ToString() }).ToList();
