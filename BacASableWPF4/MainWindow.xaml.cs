@@ -43,7 +43,23 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            BenchCryptoServiceProvider();
+            BenchSecureHashPassword();
+        }
+
+        private void BenchSecureHashPassword()
+        {
+            var goodPassword = Guid.NewGuid().ToString();
+            var badPassword = Guid.NewGuid().ToString();
+
+            var goodPasswordHash = SecurePasswordHashHelper.HashPassword(goodPassword);
+
+            var chrono = Stopwatch.StartNew();
+
+            SecurePasswordHashHelper.VerifyHashedPassword(goodPasswordHash, badPassword);
+
+            chrono.Stop();
+
+            MessageBox.Show(this, chrono.Elapsed.ToString());
         }
 
         private void TestEnumsLinqCast()
