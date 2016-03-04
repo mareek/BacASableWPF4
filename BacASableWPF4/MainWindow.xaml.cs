@@ -25,8 +25,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Options;
-using DotImaging;
-using DotImaging.Linq;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace BacASableWPF4
 {
@@ -50,22 +49,6 @@ namespace BacASableWPF4
         private void TestLinqSumOnEmptyList()
         {
             MessageBox.Show(this, $"Sum of 0 ints : { new int[0].Sum() }\nSum of 0 decimals : { new decimal[0].Sum() }\nSum of 0 string lengths : { new string[0].Sum(s => s.Length) }");
-        }
-
-        private void TestDotImagingOnMeteoFrance()
-        {
-            var image = new Uri("http://www.meteofrance.com/integration/sim-portail/generated/integration/img/produits/sat/fr/rad0_O0RKEYRD9A9.gif").GetBytes().DecodeAsColorImage();
-            var pixels = image.AsEnumerable().Distinct().ToList();
-            MessageBox.Show(this, $"Total colors used : { pixels.Count }");
-        }
-
-        private void TestHtmlAgilityPackBug()
-        {
-            var html = "<html> <body> Calling HtmlEntity.Entitize on the folowing character cause an exception: [ &#x92; ] </body> <:html>";
-
-            var result = HtmlAgilityPack.HtmlEntity.Entitize(html);
-
-            MessageBox.Show(this, result);
         }
 
         private void BenchSecureHashPassword()
