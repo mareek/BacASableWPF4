@@ -44,7 +44,12 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestDotImagingOnMeteoFrance();
+            TestLinqSumOnEmptyList();
+        }
+
+        private void TestLinqSumOnEmptyList()
+        {
+            MessageBox.Show(this, $"Sum of 0 ints : { new int[0].Sum() }\nSum of 0 decimals : { new decimal[0].Sum() }\nSum of 0 string lengths : { new string[0].Sum(s => s.Length) }");
         }
 
         private void TestDotImagingOnMeteoFrance()
