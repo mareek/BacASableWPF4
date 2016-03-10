@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -9,6 +10,7 @@ using System.Management;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -43,7 +45,66 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestLinqSumOnEmptyList();
+            BenchRefexlexionVsCastAs();
+        }
+
+        private void BenchRefexlexionVsCastAs()
+        {
+            Assembly[] bunchOfAssemblys =
+                {
+                    Assembly.GetAssembly(typeof(string)),
+                    Assembly.GetAssembly(typeof(XmlConvert)),
+                    Assembly.GetAssembly(typeof(XDocument)),
+                    Assembly.GetAssembly(typeof(Window)),
+                    Assembly.GetAssembly(typeof(XmlConvert)),
+                };
+            var objectsOfSystem = bunchOfAssemblys.SelectMany(a => a.ExportedTypes)
+                                                  .Where(t => !t.ContainsGenericParameters
+                                                              && !t.IsAbstract
+                                                              && !t.IsInterface
+                                                              && t.GetConstructor(Type.EmptyTypes) != null)
+                                                  .Select(t =>
+                                                  {
+                                                      try
+                                                      {
+                                                          return Activator.CreateInstance(t);
+                                                      }
+                                                      catch (Exception e)
+                                                      {
+                                                          return null;
+                                                      }
+                                                  })
+                                                  .Where(e => e != null).ToList();
+
+            Func<IEnumerable<object>, int> CountCollectionTypeByReflexion = objects =>
+            {
+                int result = 0;
+                foreach (var obj in objects)
+                {
+                    var type = obj.GetType();
+                    if (type.IsAssignableFrom(typeof(ICollection)))
+                    {
+                        result += 1;
+                    }
+                }
+                return result;
+            };
+
+            Func<IEnumerable<object>, int> CountCollectionTypeByCast = objects =>
+            {
+                int result = 0;
+                foreach (var obj in objects)
+                {
+                    var type = obj.GetType();
+                    if ((obj as ICollection) != null)
+                    {
+                        result += 1;
+                    }
+                }
+                return result;
+            };
+
+            ComparePerfs("With reflexion", "With cast", () => CountCollectionTypeByReflexion(objectsOfSystem), () => CountCollectionTypeByCast(objectsOfSystem));
         }
 
         private void TestLinqSumOnEmptyList()
