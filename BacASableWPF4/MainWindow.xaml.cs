@@ -45,7 +45,83 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            BenchRefexlexionVsCastAs();
+            TestEnumerableEquals();
+        }
+
+        private void TestEnumerableEquals()
+        {
+            var ok = "OK";
+            var ko = "KO";
+            var results = new[]
+            {
+                new
+                {
+                    Name = "Int list reversed",
+                    Expected = true,
+                    Actual =  EnumerableEquals(new[] { 1,2,3,4 }, new[] { 4,3,2,1 })
+                },
+                new
+                {
+                    Name = "Int list mismatch",
+                    Expected = false,
+                    Actual =  EnumerableEquals(new[] { 1,2,3,4 }, new[] { 1,2,3 })
+                },
+                new
+                {
+                    Name = "Int list mismatch bis",
+                    Expected = false,
+                    Actual =  EnumerableEquals(new[] { 1,2,3 }, new[] { 1,2,3,4 })
+                },
+                new
+                {
+                    Name = "Int list with duplicates",
+                    Expected = false,
+                    Actual =  EnumerableEquals(new[] { 1,2,3,4 }, new[] { 1,2,3,4,4 })
+                },
+                new
+                {
+                    Name = "Int list with matching duplicates",
+                    Expected = true,
+                    Actual =  EnumerableEquals(new[] { 1,2,4,3,4 }, new[] { 4,3,2,1,4 })
+                },
+                new
+                {
+                    Name = "Int? list with nulls",
+                    Expected = false,
+                    Actual =  EnumerableEquals(new int?[] { 1,2,4,3,4, null }, new int?[] { 4,3,2,1,4 })
+                },
+                new
+                {
+                    Name = "Int? list with multiple nulls",
+                    Expected = false,
+                    Actual =  EnumerableEquals(new int?[] { 1,2,4,3,4, null }, new int?[] { 4,3,2,1,4, null,null })
+                },
+                new
+                {
+                    Name = "Int? list with matching nulls",
+                    Expected = true,
+                    Actual =  EnumerableEquals(new int?[] { 1,2,4, null,3,4, null }, new int?[] { 4,3, null, null,2,1,4 })
+                },
+                new
+                {
+                    Name = "Strings",
+                    Expected = true,
+                    Actual =  EnumerableEquals(new string[] { "", "abba", null }, new string[] { null,"ABBA".ToLowerInvariant(), string.Empty})
+                },
+            };
+
+            var message = string.Join("\n", results.Select(r => $"{((r.Expected == r.Actual) ? ok : ko)} - {r.Name}"));
+
+            MessageBox.Show(this, message);
+        }
+
+        private bool EnumerableEquals<T>(IEnumerable<T> first, IEnumerable<T> second)
+        {
+            var firstLookup = first.ToLookup(e => e);
+            var secondLookup = second.ToLookup(e => e);
+
+            var allDistinct = firstLookup.Select(g => g.Key).Union(secondLookup.Select(g => g.Key));
+            return allDistinct.All(e => firstLookup[e].Count() == secondLookup[e].Count());
         }
 
         private void BenchRefexlexionVsCastAs()
