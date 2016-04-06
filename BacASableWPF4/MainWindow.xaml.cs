@@ -27,7 +27,6 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Options;
-using MongoDB.Bson.Serialization.Serializers;
 
 namespace BacASableWPF4
 {
@@ -45,7 +44,171 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestEnumerableEquals();
+            var allCodes = GetAllCodeDestinataires().GroupBy(c => c)
+                                                    .Select(g => g.Key + " (" + g.Count() + ")")
+                                                    .OrderBy(c => c)
+                                                    .ToArray();
+            MessageBox.Show(this, string.Join("\n", allCodes));
+        }
+
+        private IEnumerable<string> GetAllCodeDestinataires()
+        {
+            return from userDirectory in new DirectoryInfo(@"C:\Temp\JeDeclare").EnumerateDirectories()
+                   from envoiDirectory in userDirectory.EnumerateDirectories()
+                   from arsFile in envoiDirectory.EnumerateFiles("*_avis.xml")
+                   from ediFile in envoiDirectory.EnumerateFiles("*.edi")
+                   where arsFile.Name.StartsWith(Path.GetFileNameWithoutExtension(ediFile.Name))
+                   let type = GetFileType(ediFile)
+                   let date = GetDate(ediFile, type)
+                   where date > new DateTime(2016, 2, 1)
+                   select GetInfosRetour(arsFile, ediFile);
+                   //select code + " - " + type;
+        }
+
+        private string GetInfosRetour(FileInfo arsFile, FileInfo ediFile)
+        {
+            const string xmlns = "http://jedeclare.com/Avis";
+
+            XElement arsRoot;
+            using (var arsStream = arsFile.OpenRead())
+            {
+                arsRoot = XDocument.Load(arsStream).Root;
+            }
+
+            var declarationsAcceptees = arsRoot.Elements(XName.Get("declarationsAcceptees", xmlns));
+            var declarationsRefusees = arsRoot.Elements(XName.Get("declarationsRefusees", xmlns));
+            var declarationsAccepteesAno = arsRoot.Elements(XName.Get("declarationsAccepteesAno", xmlns));
+
+            var allDeclarations = declarationsAcceptees.Concat(declarationsRefusees).Concat(declarationsAccepteesAno);
+
+            var codeDestinataire = allDeclarations.Elements(XName.Get("codeDestinataire", xmlns))
+                                                  .Select(e => e.Value)
+                                                  .FirstOrDefault();
+
+            var arsStatus = declarationsAcceptees.Any() ? "OK" : declarationsRefusees.Any() ? "KO" : declarationsAccepteesAno.Any() ? "ANO" : "?";
+
+            XElement ediRoot = null;
+            string ediType = null;
+            string ediStatus = null;
+            using (var ediStream = ediFile.OpenRead())
+            {
+                try
+                {
+                    ediRoot = XDocument.Load(ediStream).Root;
+                }
+                catch
+                {
+                    ediType = "non XML";
+                }
+            }
+
+            if (ediType == null)
+            {
+                switch (ediRoot.Name.LocalName)
+                {
+                    case "Fichier":
+                        ediType = "OC";
+                        var nberreur = ediRoot.Elements("Declaration")
+                                              .Attributes("NbreErreur")
+                                              .Select(a => a.Value)
+                                              .FirstOrDefault();
+                        var CodeRetourDecla = ediRoot.Elements("Declaration")
+                                                     .Attributes("CodeRetourDecla")
+                                                     .Select(a => a.Value)
+                                                     .FirstOrDefault();
+                        ediStatus = (string.IsNullOrEmpty(nberreur) || nberreur == "0") ? "OK" : "KO";
+                        break;
+                    case "rapport":
+                        ediType = ediRoot.Attributes().Where(a => a.Name.LocalName == "type").First().Value;
+                        ediStatus = ediRoot.Elements("declaration")
+                                           .Elements("declaration_bilan")
+                                           .Elements("etat")
+                                           .Select(e => e.Value)
+                                           .FirstOrDefault();
+                        break;
+                    default:
+                        ediType = "Unknown XML";
+                        break;
+                }
+            }
+
+            return //codeDestinataire + " - " + 
+                ediType + " - " + ediStatus + " - " + arsStatus;
+        }
+
+        private string GetCodeDestinataire(FileInfo arsFile)
+        {
+            const string xmlns = "http://jedeclare.com/Avis";
+            using (var arsStream = arsFile.OpenRead())
+            {
+                var arsElement = XDocument.Load(arsStream).Root;
+
+                var declarationsAcceptees = arsElement.Elements(XName.Get("declarationsAcceptees", xmlns));
+                var declarationsRefusees = arsElement.Elements(XName.Get("declarationsRefusees", xmlns));
+                var declarationsAccepteesAno = arsElement.Elements(XName.Get("declarationsAccepteesAno", xmlns));
+
+                var allDeclarations = declarationsAcceptees.Concat(declarationsRefusees).Concat(declarationsAccepteesAno);
+
+                return allDeclarations.Elements(XName.Get("codeDestinataire", xmlns))
+                                      .Select(e => e.Value)
+                                      .FirstOrDefault();
+            }
+        }
+
+        private string GetFileType(FileInfo ediFile)
+        {
+            XDocument ediDoc;
+            using (var ediStream = ediFile.OpenRead())
+            {
+                try
+                {
+                    ediDoc = XDocument.Load(ediStream);
+                }
+                catch
+                {
+                    return "non XML";
+                }
+            }
+
+            var root = ediDoc.Root;
+            switch (root.Name.LocalName)
+            {
+                case "Fichier":
+                    return "OC";
+                case "rapport":
+                    return root.Attributes().Where(a => a.Name.LocalName == "type").First().Value;
+                default:
+                    return "Unknown XML";
+            }
+        }
+
+        private DateTime? GetDate(FileInfo ediFile, string type)
+        {
+            if (type == "non XML" || type == "Unknown XML")
+            {
+                return null;
+            }
+
+            using (var ediStream = ediFile.OpenRead())
+            {
+                var root = XDocument.Load(ediStream).Root;
+                if (type == "OC")
+                {
+                    var dateHeureReception = root.Attribute("DateHeureReceptionDep").Value;
+                    return DateTime.ParseExact(dateHeureReception, "yyyyMMddHHmmss", CultureInfo.CurrentCulture);
+                }
+                else if (root.Elements("envoi").Elements("envoi_identification").Elements("date_reception").Any())
+                {
+                    var envoiIdentification = root.Element("envoi").Element("envoi_identification");
+                    var dateReception = envoiIdentification.Element("date_reception").Value;
+                    var heureReception = envoiIdentification.Element("heure_reception").Value;
+                    return DateTime.ParseExact(dateReception + heureReception, "yyyy-MM-ddHH:mm:ss", CultureInfo.CurrentCulture);
+                }
+                else
+                {
+                    return null;
+                }
+            }
         }
 
         private void TestEnumerableEquals()
