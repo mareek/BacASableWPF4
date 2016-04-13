@@ -44,6 +44,34 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
+            MontyHallProblem();
+        }
+
+        private void MontyHallProblem()
+        {
+            int stickSuccesses = 0;
+            int switchSuccesses = 0;
+
+            var rnd = new Random();
+            foreach (var _ in Enumerable.Range(0, 1000))
+            {
+                var doors = new bool[3];
+                doors[rnd.Next(3)] = true;
+
+                var playerChoice = rnd.Next(3);
+                var openedDoorCandidates = Enumerable.Range(0, 3).Where(i => i != playerChoice && !doors[i]).ToList();
+                var openedDoor = openedDoorCandidates[rnd.Next(openedDoorCandidates.Count)];
+                var switchChoice = Enumerable.Range(0, 3).Single(i => i != playerChoice && i != openedDoor);
+
+                stickSuccesses += doors[playerChoice] ? 1 : 0;
+                switchSuccesses += doors[switchChoice] ? 1 : 0;
+            }
+
+            MessageBox.Show(this, $"switch: \t{switchSuccesses}\nstick: \t{stickSuccesses}");
+        }
+
+        private void AnalyseArs()
+        {
             var allCodes = GetAllCodeDestinataires().GroupBy(c => c)
                                                     .Select(g => g.Key + " (" + g.Count() + ")")
                                                     .OrderBy(c => c)
@@ -62,7 +90,7 @@ namespace BacASableWPF4
                    let date = GetDate(ediFile, type)
                    where date > new DateTime(2016, 2, 1)
                    select GetInfosRetour(arsFile, ediFile);
-                   //select code + " - " + type;
+            //select code + " - " + type;
         }
 
         private string GetInfosRetour(FileInfo arsFile, FileInfo ediFile)
