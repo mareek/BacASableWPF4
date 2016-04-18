@@ -44,7 +44,7 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            MontyHallProblem();
+            AnalyseArs();
         }
 
         private void MontyHallProblem()
@@ -74,7 +74,7 @@ namespace BacASableWPF4
         {
             var allCodes = GetAllCodeDestinataires().GroupBy(c => c)
                                                     .Select(g => g.Key + " (" + g.Count() + ")")
-                                                    .OrderBy(c => c)
+                                                    //.OrderBy(c => c)
                                                     .ToArray();
             MessageBox.Show(this, string.Join("\n", allCodes));
         }
@@ -87,9 +87,11 @@ namespace BacASableWPF4
                    from ediFile in envoiDirectory.EnumerateFiles("*.edi")
                    where arsFile.Name.StartsWith(Path.GetFileNameWithoutExtension(ediFile.Name))
                    let type = GetFileType(ediFile)
-                   let date = GetDate(ediFile, type)
-                   where date > new DateTime(2016, 2, 1)
-                   select GetInfosRetour(arsFile, ediFile);
+                   orderby type
+                   //let date = GetDate(ediFile, type)
+                   //where date > new DateTime(2016, 2, 1)
+                   from mois in GetMoisDeclaration(ediFile, type)
+                   select $"type: {type}, mois: {mois}";
             //select code + " - " + type;
         }
 
@@ -236,6 +238,23 @@ namespace BacASableWPF4
                 {
                     return null;
                 }
+            }
+        }
+
+        private IEnumerable<string> GetMoisDeclaration(FileInfo ediFile, string type)
+        {
+            if (type == "non XML" || type == "Unknown XML" || type == "OC")
+            {
+                return Enumerable.Empty<string>();
+            }
+
+            using (var ediStream = ediFile.OpenRead())
+            {
+                var root = XDocument.Load(ediStream).Root;
+                return root.Elements("declaration")
+                           .Elements("declaration_identification")
+                           .Elements("mois")
+                           .Select(e => e.Value);
             }
         }
 
