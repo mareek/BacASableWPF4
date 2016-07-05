@@ -44,7 +44,68 @@ namespace BacASableWPF4
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            AnalyseArs();
+            TestStreamCsvGeneration();
+        }
+
+
+        private void TestStreamCsvGeneration(int nbLines = 1000001)
+        {
+            using (var readStream = new StreamFromByteEnumerable(GenerateCsvLines(nbLines).SelectMany(s => Encoding.UTF8.GetBytes(s).Concat(new byte[] { 13, 10 }))))
+            {
+                TestStream(readStream);
+            }
+        }
+
+        private IEnumerable<string> GenerateCsvLines(int nbLines)
+        {
+            string[] noms = { "Dupont", "Martin", "Volfoni" };
+            string[] prenoms = { "Raoul", "Pierre", "Jean" };
+
+            var rnd = new Random();
+            yield return "Id;Date;Nom;Prenom";
+
+            for (int i = 0; i < nbLines; i++)
+            {
+                yield return string.Join(
+                                ";",
+                                i,
+                                DateTime.Today.AddDays(-(i % 42500)).ToString("yyyy-MM-dd"),
+                                noms[rnd.Next(noms.Length)],
+                                prenoms[rnd.Next(prenoms.Length)]);
+            }
+        }
+
+        private void TestStreamGeneration(long fileSize = 200000001L)
+        {
+            var rnd = new Random();
+            var randomBytes = new byte[1];
+            Func<long, byte> generator = _ =>
+            {
+                rnd.NextBytes(randomBytes);
+                return randomBytes[0];
+            };
+
+            using (var readStream = new GeneratorStream(fileSize, generator))
+            {
+                TestStream(readStream);
+            }
+        }
+
+
+        private void TestStream(Stream readStream)
+        {
+            var tempFilePath = Path.GetTempFileName();
+            try
+            {
+                using (Stream writeStream = new FileStream(tempFilePath, FileMode.Append))
+                {
+                    readStream.CopyTo(writeStream);
+                }
+            }
+            finally
+            {
+                File.Delete(tempFilePath);
+            }
         }
 
         private void MontyHallProblem()
