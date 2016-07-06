@@ -65,13 +65,14 @@ namespace BacASableWPF4
         }
     }
 
-    public class StreamFromByteEnumerable : Stream
+    public class StreamFromLines : Stream
     {
         private readonly IEnumerator<byte> _source;
 
-        public StreamFromByteEnumerable(IEnumerable<byte> source)
+        public StreamFromLines(IEnumerable<string> lines)
         {
-            _source = source.GetEnumerator();
+            _source = lines.SelectMany(s => Encoding.UTF8.GetBytes(s).Concat(new byte[] { 13, 10 }))
+                           .GetEnumerator();
         }
 
         public override bool CanRead => true;
@@ -111,20 +112,5 @@ namespace BacASableWPF4
         public override void SetLength(long value) { throw new NotImplementedException(); }
 
         public override void Write(byte[] buffer, int offset, int count) { throw new NotImplementedException(); }
-    }
-
-    public class StringEnumerableConverter
-    {
-        private readonly Encoding _encoding;
-
-        public StringEnumerableConverter(Encoding encoding = null)
-        {
-            _encoding = encoding ?? Encoding.UTF8;
-        }
-
-        public IEnumerable<byte> Convert(IEnumerable<string> source)
-        {
-            return source.SelectMany(s => _encoding.GetBytes(s));
-        }
     }
 }

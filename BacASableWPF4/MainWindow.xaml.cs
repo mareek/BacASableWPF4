@@ -42,15 +42,17 @@ namespace BacASableWPF4
             InitializeComponent();
         }
 
-        private void TestButton_Click(object sender, RoutedEventArgs e)
+        private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestStreamCsvGeneration();
+            TestButton.IsEnabled = false;
+            await Task.Run(() => TestStreamCsvGeneration());
+            TestButton.IsEnabled = true;
         }
 
 
-        private void TestStreamCsvGeneration(int nbLines = 1000001)
+        private void TestStreamCsvGeneration()
         {
-            using (var readStream = new StreamFromByteEnumerable(GenerateCsvLines(nbLines).SelectMany(s => Encoding.UTF8.GetBytes(s).Concat(new byte[] { 13, 10 }))))
+            using (var readStream = new StreamFromLines(GenerateCsvLines(500)))
             {
                 TestStream(readStream);
             }
@@ -58,8 +60,8 @@ namespace BacASableWPF4
 
         private IEnumerable<string> GenerateCsvLines(int nbLines)
         {
-            string[] noms = { "Dupont", "Martin", "Volfoni" };
-            string[] prenoms = { "Raoul", "Pierre", "Jean" };
+            string[] noms = { "Dupont", "Martin", "Volfoni", "Durand" };
+            string[] prenoms = { "Raoul", "Pierre", "Jean", "Georgette" };
 
             var rnd = new Random();
             yield return "Id;Date;Nom;Prenom";
