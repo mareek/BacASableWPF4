@@ -45,10 +45,30 @@ namespace BacASableWPF4
         private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
             TestButton.IsEnabled = false;
-            await Task.Run(() => TestStreamCsvGeneration());
+            await Task.Run(() => ReflexionWithReadOnlyPropreties());
             TestButton.IsEnabled = true;
         }
 
+        private void ReflexionWithReadOnlyPropreties()
+        {
+            var readWriteProperty = typeof(ClassForReadOnlyProperty).GetProperty("ReadWrite", BindingFlags.Instance | BindingFlags.Public);
+            var readPrivateWriteProperty = typeof(ClassForReadOnlyProperty).GetProperty("ReadPrivateWrite", BindingFlags.Instance | BindingFlags.Public);
+            var readOnlyProperty = typeof(ClassForReadOnlyProperty).GetProperty("ReadOnly", BindingFlags.Instance | BindingFlags.Public);
+            var readOnlyWithoutBackingFieldProperty = typeof(ClassForReadOnlyProperty).GetProperty("ReadOnlyWithoutBackingField", BindingFlags.Instance | BindingFlags.Public);
+
+            Dispatcher.Invoke(() => MessageBox.Show(this, string.Join("\n", readWriteProperty, readPrivateWriteProperty, readOnlyProperty, readOnlyWithoutBackingFieldProperty)));
+        }
+
+        private class ClassForReadOnlyProperty
+        {
+            public int ReadWrite { get; set; }
+
+            public int ReadPrivateWrite { get; private set; }
+
+            public int ReadOnly { get; }
+
+            public int ReadOnlyWithoutBackingField => 3;
+        }
 
         private void TestStreamCsvGeneration()
         {

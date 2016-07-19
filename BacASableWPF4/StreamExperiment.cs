@@ -37,13 +37,13 @@ namespace BacASableWPF4
         {
             for (int i = 0; i < count; i++)
             {
-                if (Position >= (Length - 1))
+                if (Position >= Length)
                 {
                     return i;
                 }
 
-                Position++;
                 buffer[offset + i] = _generator(Position);
+                Position++;
             }
 
             return count;
