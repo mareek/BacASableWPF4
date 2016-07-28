@@ -45,8 +45,86 @@ namespace BacASableWPF4
         private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
             TestButton.IsEnabled = false;
-            await Task.Run(() => ReflexionWithReadOnlyPropreties());
+            await Task.Run(() => BenchStructComparaison());
             TestButton.IsEnabled = true;
+        }
+
+        private void BenchStructComparaison()
+        {
+            const int sampleSize = 10000;
+            var autoData = Enumerable.Range(0, sampleSize).Select(i => new StrucAutomaticEquals { PropInt = i / 2, PropDecimal = (i / 2) / 100M, PropString = (i / 2).ToString() }).ToArray();
+            var manualData = Enumerable.Range(0, sampleSize).Select(i => new StrucManualEquals { PropInt = i / 2, PropDecimal = (i / 2) / 100M, PropString = (i / 2).ToString() }).ToArray();
+
+            ComparePerfs("Struc automatic equals", "Struct manual equals", () => BenchStrucFunction(autoData), () => BenchStrucFunction(manualData));
+        }
+
+        private int BenchStrucFunction<T>(T[] data) where T : IStructEquals
+        {
+            int result = 0;
+            var previous = data[0];
+            for (int i = 1; i < data.Length; i++)
+            {
+                var current = data[i];
+                if (current.Equals(previous))
+                {
+                    result++;
+                }
+
+                previous = current;
+            }
+
+            return result;
+        }
+
+        private interface IStructEquals
+        {
+            int PropInt { get; set; }
+            decimal PropDecimal { get; set; }
+            string PropString { get; set; }
+        }
+
+        private struct StrucAutomaticEquals : IStructEquals
+        {
+            public int PropInt { get; set; }
+
+            public decimal PropDecimal { get; set; }
+
+            public string PropString { get; set; }
+        }
+
+        private struct StrucManualEquals : IStructEquals
+        {
+            public int PropInt { get; set; }
+
+            public decimal PropDecimal { get; set; }
+
+            public string PropString { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is StrucManualEquals)
+                {
+                    var other = (StrucManualEquals)obj;
+                    return PropInt == other.PropInt && PropDecimal == other.PropDecimal && PropString == other.PropString;
+                }
+
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return PropInt.GetHashCode() ^ PropDecimal.GetHashCode() ^ PropString.GetHashCode();
+            }
+
+            public static bool operator ==(StrucManualEquals left, StrucManualEquals right)
+            {
+                return left.Equals(right);
+            }
+
+            public static bool operator !=(StrucManualEquals left, StrucManualEquals right)
+            {
+                return !left.Equals(right);
+            }
         }
 
         private void ReflexionWithReadOnlyPropreties()
@@ -438,7 +516,7 @@ namespace BacASableWPF4
                                                       {
                                                           return Activator.CreateInstance(t);
                                                       }
-                                                      catch (Exception e)
+                                                      catch
                                                       {
                                                           return null;
                                                       }
@@ -935,7 +1013,7 @@ namespace BacASableWPF4
                 sampleSize *= 10;
             }
 
-            MessageBox.Show(this, reportBuilder.ToString());
+            Dispatcher.Invoke(() => MessageBox.Show(this, reportBuilder.ToString()));
         }
 
         private TimeSpan MeasureActionTime(Action action, int nbIteration)
