@@ -45,8 +45,34 @@ namespace BacASableWPF4
         private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
             TestButton.IsEnabled = false;
-            await Task.Run(() => BenchStructComparaison());
+            await Task.Run(() =>
+            {
+                var lastLine = GetLastLine(new FileInfo(@"C:\Users\mourisson\Downloads\BigData du 20151216 au 20160616.csv"));
+                ShowMessageBox(lastLine);
+            });
             TestButton.IsEnabled = true;
+        }
+
+        private void ShowMessageBox(string message)
+        {
+            Dispatcher.Invoke(() => MessageBox.Show(this, message));
+        }
+
+        private string GetLastLine(FileInfo file)
+        {
+            using (var fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, FileOptions.SequentialScan))
+            using (var streamReader = new StreamReader(fileStream))
+            {
+                var previousLine = streamReader.ReadLine();
+                var currentLine = streamReader.ReadLine();
+                while (currentLine != null)
+                {
+                    previousLine = currentLine;
+                    currentLine = streamReader.ReadLine();
+                }
+
+                return previousLine;
+            }
         }
 
         private void BenchStructComparaison()
