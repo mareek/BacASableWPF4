@@ -42,11 +42,43 @@ namespace BacASableWPF4
             InitializeComponent();
         }
 
-        private async void TestButton_Click(object sender, RoutedEventArgs e)
+        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(InitializerWithIList);
+
+        private async Task ExecuteAsync(Action action)
         {
             TestButton.IsEnabled = false;
-            await Task.Run(() => BenchStructComparaison());
+            await Task.Run(action);
             TestButton.IsEnabled = true;
+        }
+
+        private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void InitializerWithIList() => ShowMessageBox(new ClassWithIListProperty { Dates = { DateTime.Now } }.Dates.GetType().ToString());
+
+        private class ClassWithIListProperty
+        {
+            public ClassWithIListProperty()
+            {
+                Dates = new List<DateTime>();
+            }
+
+            public IList<DateTime> Dates { get; set; }
+        }
+
+        private string GetLastLine(FileInfo file)
+        {
+            using (var streamReader = file.OpenText())
+            {
+                var previousLine = streamReader.ReadLine();
+                var currentLine = streamReader.ReadLine();
+                while (currentLine != null)
+                {
+                    previousLine = currentLine;
+                    currentLine = streamReader.ReadLine();
+                }
+
+                return previousLine;
+            }
         }
 
         private void BenchStructComparaison()
