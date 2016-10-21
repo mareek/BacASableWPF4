@@ -67,7 +67,8 @@ namespace BacASableWPF4
 
         private string GetLastLine(FileInfo file)
         {
-            using (var streamReader = file.OpenText())
+            using (var fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, FileOptions.SequentialScan))
+            using (var streamReader = new StreamReader(fileStream))
             {
                 var previousLine = streamReader.ReadLine();
                 var currentLine = streamReader.ReadLine();
