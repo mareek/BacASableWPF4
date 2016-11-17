@@ -42,7 +42,7 @@ namespace BacASableWPF4
             InitializeComponent();
         }
 
-        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(InitializerWithIList);
+        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(ShowMemoryInformations);
 
         private async Task ExecuteAsync(Action action)
         {
@@ -52,6 +52,35 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void ShowMemoryInformations()
+        {
+            const long mega = 1024 * 1024;
+
+            string message;
+            using (var currentProcess = Process.GetCurrentProcess())
+            using (var perfCounterValidBytes = new PerformanceCounter("Mémoire", "Octets validés", true))
+            using (var perfCounterBytesAvailable = new PerformanceCounter("Mémoire", "Octets disponibles", true))
+            {
+                var processPrivateMemory = currentProcess.PrivateMemorySize64;
+                var processWorkingSet = currentProcess.WorkingSet64;
+                var gcTotalMemory = GC.GetTotalMemory(false);
+                var environnementSystemPageSize = Environment.SystemPageSize;
+                var environnementWorkingSet = Environment.WorkingSet;
+                var perofrmaceCounterTotalMemory = perfCounterValidBytes.NextValue();
+                var perofrmaceCounterAvailableMemory = perfCounterBytesAvailable.NextValue();
+
+                message = $"{nameof(processPrivateMemory)}: {processPrivateMemory / mega} MB\n"
+                        + $"{nameof(processWorkingSet)}: {processWorkingSet / mega} MB\n"
+                        + $"{nameof(gcTotalMemory)}: {gcTotalMemory / mega} MB\n"
+                        + $"{nameof(environnementSystemPageSize)}: {environnementSystemPageSize} B\n"
+                        + $"{nameof(environnementWorkingSet)}: {environnementWorkingSet / mega} MB\n"
+                        + $"{nameof(perofrmaceCounterTotalMemory)}: {perofrmaceCounterTotalMemory / mega} MB\n"
+                        + $"{nameof(perofrmaceCounterAvailableMemory)}: {perofrmaceCounterAvailableMemory / mega} MB\n";
+            }
+
+            ShowMessageBox(message);
+        }
 
         private void InitializerWithIList() => ShowMessageBox(new ClassWithIListProperty { Dates = { DateTime.Now } }.Dates.GetType().ToString());
 
