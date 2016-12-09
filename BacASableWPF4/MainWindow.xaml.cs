@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -53,9 +54,23 @@ namespace BacASableWPF4
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
 
+        private string GetDownloadFolder() => GetKnownFolder(new Guid("374DE290-123F-4565-9164-39C4925E467B"));
+
+        private string GetDownloadFilePath(string relativeFilePath) => Path.Combine(GetDownloadFolder(), relativeFilePath);
+
         private string GetDesktopFolder() => Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
 
         private string GetDesktopFilePath(string relativeFilePath) => Path.Combine(GetDesktopFolder(), relativeFilePath);
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid rfid, uint dwFlags, IntPtr hToken, out string pszPath);
+
+        private string GetKnownFolder(Guid folderGuid)
+        {
+            string folder;
+            SHGetKnownFolderPath(folderGuid, 0, IntPtr.Zero, out folder);
+            return folder;
+        }
 
         private void ShowMemoryInformations()
         {
@@ -859,8 +874,8 @@ namespace BacASableWPF4
         private void CleanKimadoLogs()
         {
             var lineToRemoveRegex = new Regex(".*Cegid.DsnLink.DataAccess.Databases.Sql.RunSqlCommandService	-	Utilise connexion 'Server=.*;Database=Link;User .*", RegexOptions.Compiled);
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150622_1500_au_20150622_1552.txt");
-            var outputFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log Debug.txt");
+            var logFile = new FileInfo(GetDownloadFilePath("Log_Kimado_Debug_du_20150622_1500_au_20150622_1552.txt"));
+            var outputFile = new FileInfo(GetDownloadFilePath("Log Debug.txt"));
 
             CleanLogFile(logFile, outputFile, lineToRemoveRegex);
 
@@ -893,7 +908,7 @@ namespace BacASableWPF4
             const string strRegex = ".*Cegid.DsnLink.DataAccess.Databases.Sql.RunSqlCommandService	-	Utilise connexion 'Server=.*;Database=Link;User .*";
             var compiled = new Regex(strRegex, RegexOptions.Compiled);
             var interpreted = new Regex(strRegex);
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\Log_Kimado_Debug_du_20150622_1110_au_20150622_1202.txt");
+            var logFile = new FileInfo(GetDownloadFilePath("Log_Kimado_Debug_du_20150622_1110_au_20150622_1202.txt"));
 
             CompareRegexpPerfs(logFile, "Compiled", compiled, "Simple", interpreted);
         }
@@ -1029,7 +1044,7 @@ namespace BacASableWPF4
 
         private void FilterLog()
         {
-            var logFile = new FileInfo(@"C:\Users\mourisson\Downloads\log (1).txt");
+            var logFile = new FileInfo(GetDownloadFilePath("log (1).txt"));
             var codes = GetHttpResponses(logFile).GroupBy(c => c).Select(g => new { Code = g.Key, Count = g.Count() }.ToString());
 
             MessageBox.Show(this, string.Join("\n", codes));
@@ -1247,7 +1262,7 @@ namespace BacASableWPF4
 
         private void PivotAnalysis()
         {
-            var pivotDirectory = new DirectoryInfo(@"C:\Users\mourisson\Downloads\pivot_rec");
+            var pivotDirectory = new DirectoryInfo(GetDownloadFilePath("pivot_rec"));
             var pivots = pivotDirectory.EnumerateFiles("*.pivot").Select(LoadPivot).ToList();
 
             /*
