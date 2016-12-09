@@ -53,6 +53,10 @@ namespace BacASableWPF4
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
 
+        private string GetDesktopFolder() => Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+
+        private string GetDesktopFilePath(string relativeFilePath) => Path.Combine(GetDesktopFolder(), relativeFilePath);
+
         private void ShowMemoryInformations()
         {
             const long mega = 1024 * 1024;
@@ -1234,11 +1238,11 @@ namespace BacASableWPF4
 
         private void Xdt()
         {
-            var transform = new XmlTransformation(@"C:\Users\mourisson\Desktop\Web.Prod.config");
+            var transform = new XmlTransformation(GetDesktopFilePath("Web.Prod.config"));
             var config = new XmlDocument { PreserveWhitespace = true };
-            config.Load(@"C:\Users\mourisson\Desktop\Web.config");
+            config.Load(GetDesktopFilePath("Web.config"));
             transform.Apply(config);
-            config.Save(@"C:\Users\mourisson\Desktop\Web.config.transformed");
+            config.Save(GetDesktopFilePath("Web.config.transformed"));
         }
 
         private void PivotAnalysis()
@@ -1529,8 +1533,8 @@ namespace BacASableWPF4
 
         private void TestGeneratedRoute()
         {
-            var xsd = new FileInfo(@"C:\Users\mmouriss\Desktop\génération doc route.xml\routeV2.xsd");
-            var xml = new FileInfo(@"C:\Users\mmouriss\Desktop\route.xml");
+            var xsd = new FileInfo(GetDesktopFilePath(@"génération doc route.xml\routeV2.xsd"));
+            var xml = new FileInfo(GetDesktopFilePath("route.xml"));
 
             if (ValidateXml(xsd, xml))
                 MessageBox.Show(this, "Success !!");
@@ -1690,8 +1694,8 @@ namespace BacASableWPF4
         private void DoEncryptPulseMachin()
         {
             var machin = EncryptPulseMachin.GetInstance();
-            var sourceFile = new FileInfo(@"C:\Users\mmouriss\Desktop\ItronPulseValues.xml");
-            var destFile = new FileInfo(@"C:\Users\mmouriss\Desktop\ItronPulseValues.xmlenc");
+            var sourceFile = new FileInfo(GetDesktopFilePath("ItronPulseValues.xml"));
+            var destFile = new FileInfo(GetDesktopFilePath("ItronPulseValues.xmlenc"));
 
             using (var stramReader = sourceFile.OpenRead())
             using (var encryptedStram = machin.Encrypt(stramReader))
@@ -1914,7 +1918,7 @@ namespace BacASableWPF4
 
         private void ScanFilesFromFtp()
         {
-            var dir = new DirectoryInfo(@"C:\Users\mmouriss\Desktop\ftp");
+            var dir = new DirectoryInfo(GetDesktopFilePath("ftp"));
             var files = dir.GetFiles();
 
             long dummyLong;
@@ -2438,7 +2442,7 @@ namespace BacASableWPF4
 
         private void TestXmlValidation()
         {
-            ValidateXml(new FileInfo(@"C:\Users\mmouriss\Desktop\TestXSD\xsd2.xsd"), new FileInfo(@"C:\Users\mmouriss\Desktop\shiporder.xml"));
+            ValidateXml(new FileInfo(GetDesktopFilePath(@"TestXSD\xsd2.xsd")), new FileInfo(GetDesktopFilePath("shiporder.xml")));
         }
 
         private bool ValidateXml(FileInfo xsdFile, FileInfo xmlFile)
