@@ -22,6 +22,7 @@ using System.Windows.Controls;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
+using System.Xml.Serialization;
 using Microsoft.Web.XmlTransform;
 using Microsoft.Win32;
 using MongoDB.Bson;
@@ -43,7 +44,7 @@ namespace BacASableWPF4
             InitializeComponent();
         }
 
-        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(ShowMemoryInformations);
+        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(FiddleWithXmlArraySerialization);
 
         private async Task ExecuteAsync(Action action)
         {
@@ -53,6 +54,44 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void FiddleWithXmlArraySerialization()
+        {
+            var me = new XmlSerializablePerson
+            {
+                Id = 12,
+                Name = "Matthieu",
+                Children = new XmlSerializablePerson[]
+                {
+                    new XmlSerializablePerson { Id = 1, Name = "Tybalt" },
+                    new XmlSerializablePerson { Id = 2, Name = "Arthur" },
+                }
+            };
+
+            ShowMessageBox(SerializeToXml(me));
+        }
+
+        private string SerializeToXml<T>(T objectoToserialize)
+        {
+            using (var textWriter = new StringWriter())
+            {
+                var serializer = new XmlSerializer(typeof(T));
+
+                serializer.Serialize(textWriter, objectoToserialize);
+
+                return textWriter.ToString();
+            }
+        }
+
+        public class XmlSerializablePerson
+        {
+            public int Id { get; set; }
+
+            public string Name { get; set; }
+
+            [XmlElement("Child")]
+            public XmlSerializablePerson[] Children { get; set; }
+        }
 
         private string GetDownloadFolder() => GetKnownFolder(new Guid("374DE290-123F-4565-9164-39C4925E467B"));
 
@@ -86,16 +125,16 @@ namespace BacASableWPF4
                 var gcTotalMemory = GC.GetTotalMemory(false);
                 var environnementSystemPageSize = Environment.SystemPageSize;
                 var environnementWorkingSet = Environment.WorkingSet;
-                var perofrmaceCounterTotalMemory = perfCounterValidBytes.NextValue();
-                var perofrmaceCounterAvailableMemory = perfCounterBytesAvailable.NextValue();
+                var performanceCounterTotalMemory = perfCounterValidBytes.NextValue();
+                var performanceCounterAvailableMemory = perfCounterBytesAvailable.NextValue();
 
                 message = $"{nameof(processPrivateMemory)}: {processPrivateMemory / mega} MB\n"
                         + $"{nameof(processWorkingSet)}: {processWorkingSet / mega} MB\n"
                         + $"{nameof(gcTotalMemory)}: {gcTotalMemory / mega} MB\n"
                         + $"{nameof(environnementSystemPageSize)}: {environnementSystemPageSize} B\n"
                         + $"{nameof(environnementWorkingSet)}: {environnementWorkingSet / mega} MB\n"
-                        + $"{nameof(perofrmaceCounterTotalMemory)}: {perofrmaceCounterTotalMemory / mega} MB\n"
-                        + $"{nameof(perofrmaceCounterAvailableMemory)}: {perofrmaceCounterAvailableMemory / mega} MB\n";
+                        + $"{nameof(performanceCounterTotalMemory)}: {performanceCounterTotalMemory / mega} MB\n"
+                        + $"{nameof(performanceCounterAvailableMemory)}: {performanceCounterAvailableMemory / mega} MB\n";
             }
 
             ShowMessageBox(message);
