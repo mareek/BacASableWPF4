@@ -55,6 +55,42 @@ namespace BacASableWPF4
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
 
+        private static void DeleteDirectoryWithReadOnlyFiles(DirectoryInfo dirToDelete)
+        {
+            foreach (var file in dirToDelete.EnumerateFiles())
+            {
+                file.Attributes = FileAttributes.Normal;
+                file.Delete();
+            }
+
+            foreach (var subDir in dirToDelete.EnumerateDirectories())
+            {
+                subDir.Attributes = FileAttributes.Normal;
+                DeleteDirectoryWithReadOnlyFiles(subDir);
+            }
+
+            dirToDelete.Delete();
+        }
+
+        private static bool RetryWithIncreasingWait(int maxTry, Action actionToRetry, Func<bool> isSuccess)
+        {
+            int retryCount = 0;
+            do
+            {
+                try
+                {
+                    actionToRetry();
+                }
+                catch
+                {
+                    Thread.Sleep(10 * (int)Math.Pow(2, retryCount));
+                    retryCount++;
+                }
+            } while (!isSuccess() && retryCount < maxTry);
+
+            return isSuccess();
+        }
+
         private void FiddleWithXmlArraySerialization()
         {
             var me = new XmlSerializablePerson
