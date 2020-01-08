@@ -44,7 +44,7 @@ namespace BacASableWPF4
             InitializeComponent();
         }
 
-        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(FiddleWithXmlArraySerialization);
+        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(PlayWithSwitchExpression);
 
         private async Task ExecuteAsync(Action action)
         {
@@ -54,6 +54,20 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void PlayWithSwitchExpression()
+        {
+            var now = DateTime.Now;
+            var message = (now.Second % 10) switch
+            {
+                0 => "Zero",
+                1 => "Un",
+                2 => "deux",
+                3 => "Trois",
+                var s => s.ToString()
+            };
+            ShowMessageBox(now.ToString() + " | " + message);
+        }
 
         private static void DeleteDirectoryWithReadOnlyFiles(DirectoryInfo dirToDelete)
         {
