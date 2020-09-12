@@ -44,7 +44,12 @@ namespace BacASableWPF4
             InitializeComponent();
         }
 
-        private async void TestButton_Click(object sender, RoutedEventArgs e) => await ExecuteAsync(PlayWithSwitchExpression);
+        private async void TestButton_Click(object sender, RoutedEventArgs e)
+        {
+            FileInfo zipFile = new FileInfo(@"C:\Users\maree\Downloads\srtm_one_deg.zip");
+            DirectoryInfo dirToAdd = new DirectoryInfo(@"C:\SRTM");
+            await ExecuteAsync(() => CreatePseudoTarAsZip(zipFile, dirToAdd));
+        }
 
         private async Task ExecuteAsync(Action action)
         {
@@ -54,6 +59,15 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void CreatePseudoTarAsZip(FileInfo zipFile, DirectoryInfo dirToAdd)
+        {
+            using var zipArchive = ZipFile.Open(zipFile.FullName, ZipArchiveMode.Create);
+            foreach (var fileToAdd in dirToAdd.EnumerateFiles())
+            {
+                zipArchive.CreateEntryFromFile(fileToAdd.FullName, fileToAdd.Name, CompressionLevel.NoCompression);
+            }
+        }
 
         private void PlayWithSwitchExpression()
         {
