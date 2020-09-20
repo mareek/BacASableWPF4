@@ -46,9 +46,9 @@ namespace BacASableWPF4
 
         private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            FileInfo zipFile = new FileInfo(@"C:\Users\maree\Downloads\srtm_one_deg.zip");
-            DirectoryInfo dirToAdd = new DirectoryInfo(@"C:\SRTM");
-            await ExecuteAsync(() => CreatePseudoTarAsZip(zipFile, dirToAdd));
+            DirectoryInfo sourceDir = new DirectoryInfo(@"C:\SRTM");
+            DirectoryInfo targetDir = new DirectoryInfo(@"D:\SRTM\tiff");
+            await ExecuteAsync(() => UnzipAllFilesOfDirectory(sourceDir, targetDir));
         }
 
         private async Task ExecuteAsync(Action action)
@@ -59,6 +59,26 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void UnzipAllFilesOfDirectory(DirectoryInfo sourceDir, DirectoryInfo targetDir)
+        {
+            if (!targetDir.Exists)
+            {
+                targetDir.Create();
+            }
+            foreach (var zipFile in sourceDir.EnumerateFiles("*.zip"))
+            {
+                using var zipArchive = ZipFile.OpenRead(zipFile.FullName);
+                foreach (var entry in zipArchive.Entries)
+                {
+                    var targetFilePath = Path.Combine(targetDir.FullName, entry.Name);
+                    if (!File.Exists(targetFilePath))
+                    {
+                        entry.ExtractToFile(targetFilePath); 
+                    }
+                }
+            }
+        }
 
         private void CreatePseudoTarAsZip(FileInfo zipFile, DirectoryInfo dirToAdd)
         {
