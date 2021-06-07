@@ -23,12 +23,14 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Force.Crc32;
 using Microsoft.Web.XmlTransform;
 using Microsoft.Win32;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Options;
+using Murmur;
 
 namespace BacASableWPF4
 {
@@ -46,9 +48,7 @@ namespace BacASableWPF4
 
         private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            DirectoryInfo sourceDir = new DirectoryInfo(@"C:\SRTM");
-            DirectoryInfo targetDir = new DirectoryInfo(@"D:\SRTM\tiff");
-            await ExecuteAsync(() => UnzipAllFilesOfDirectory(sourceDir, targetDir));
+            await ExecuteAsync(() => TestCollisions(@"C:\Users\mmourisson\Downloads\cli_id_guid.csv", new Crc32Algorithm()));
         }
 
         private async Task ExecuteAsync(Action action)
@@ -59,6 +59,32 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void TestCollisions(string file, HashAlgorithm hashAlgo)
+        {
+            var lookup = File.ReadLines(file).ToLookup(l => ComputeHash(l, hashAlgo));
+            var collisions = lookup.Where(l => l.Count() > 1).OrderBy(g => g.Key).ToArray();
+            var message = $"Colisions : \r\n{string.Join("\r\n", collisions.Select(g => $"{g.Key} ({g.Count()}) : " + string.Join(", ", g)))}";
+            ShowMessageBox(message);
+        }
+
+        private void TestMurmurHash(string hexData)
+        {
+            byte[] data = ParseHexString(hexData);
+            HashAlgorithm murmur32 = MurmurHash.Create32();
+            byte[] hash = murmur32.ComputeHash(data);
+            var intHash = BitConverter.ToUInt32(hash, 0);
+            var hexHash = BitConverter.ToString(hash).Replace("-", "");
+            var message = $"original : {hexData}\r\nhashed : {hexHash}\r\nuint hash : {intHash}";
+            ShowMessageBox(message);
+        }
+
+        private string ComputeHash(string hexData, HashAlgorithm hashAlgo)
+        {
+            byte[] data = ParseHexString(hexData);
+            byte[] hash = hashAlgo.ComputeHash(data);
+            return BitConverter.ToString(hash).Replace("-", "");
+        }
 
         private void UnzipAllFilesOfDirectory(DirectoryInfo sourceDir, DirectoryInfo targetDir)
         {
@@ -74,7 +100,7 @@ namespace BacASableWPF4
                     var targetFilePath = Path.Combine(targetDir.FullName, entry.Name);
                     if (!File.Exists(targetFilePath))
                     {
-                        entry.ExtractToFile(targetFilePath); 
+                        entry.ExtractToFile(targetFilePath);
                     }
                 }
             }
