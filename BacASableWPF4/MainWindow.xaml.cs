@@ -48,7 +48,7 @@ namespace BacASableWPF4
 
         private async void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            await ExecuteAsync(() => TestCollisions(@"C:\Users\mmourisson\Downloads\cli_id_guid.csv", new Crc32Algorithm()));
+            await ExecuteAsync(ShowAllSupportedEncodings);
         }
 
         private async Task ExecuteAsync(Action action)
@@ -59,6 +59,11 @@ namespace BacASableWPF4
         }
 
         private void ShowMessageBox(string message) => Dispatcher.Invoke(() => MessageBox.Show(this, message));
+
+        private void ShowAllSupportedEncodings()
+        {
+            ShowMessageBox(string.Join("\r\n", Encoding.GetEncodings().Select(Newtonsoft.Json.JsonConvert.SerializeObject)));
+        }
 
         private void TestCollisions(string file, HashAlgorithm hashAlgo)
         {
